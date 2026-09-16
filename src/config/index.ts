@@ -28,6 +28,7 @@ if (!parsed.success) {
     console.error(`  - ${issue.path.join(".")}: ${issue.message}`);
   }
   process.exit(1);
+  throw new Error("Configuration validation failed");
 }
 
 export const config = parsed.data;
