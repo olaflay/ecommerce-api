@@ -6,11 +6,15 @@ import { config } from "./config/index.js";
 import { rateLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
+import categoryRouter from "./routes/category.routes.js";
+import productRouter from "./routes/product.routes.js";
+import customerRouter from "./routes/customer.routes.js";
+import orderRouter from "./routes/order.routes.js";
 import { NotFoundError } from "./types/index.js";
 
 export const app = express();
 
-// Set trust proxy for deployment behind reverse proxies (Render / Railway)
+// Trust proxy for production deployment behind reverse proxies (Render / Railway)
 app.set("trust proxy", 1);
 
 // Security headers & CORS
@@ -31,6 +35,12 @@ app.use(rateLimiter);
 // Health check routes (unrestricted)
 app.use(healthRouter);
 app.use("/api/v1", healthRouter);
+
+// Resource routers mounted under /api/v1
+app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/customers", customerRouter);
+app.use("/api/v1/orders", orderRouter);
 
 // Unmatched route 404 handler
 app.use((_req: Request, _res: Response) => {
