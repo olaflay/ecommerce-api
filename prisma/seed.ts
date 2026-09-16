@@ -1,200 +1,200 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, OrderStatus } from "@prisma/client";
+import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
-// Determinism (PRD §15) = fixed literal arrays, no RNG, no timestamps variation.
-// Money is NGN stored as minor units (kobo) per PRD §6.
-const CAT_NAME = {
-  Electronics: "Electronics",
-  Clothing: "Clothing",
-  Books: "Books",
-  HomeKitchen: "Home & Kitchen",
-  Beauty: "Beauty",
-} as const;
+// Target volumes per PRD §15
+const NUM_CATEGORIES = 40;
+const NUM_PRODUCTS = 400;
+const NUM_CUSTOMERS = 400;
+const NUM_ORDERS = 800;
 
-// [name, catKey, priceKobo, stockQuantity]
-const PRODUCTS: [string, keyof typeof CAT_NAME, number, number][] = [
-  ["Smartphone X10", "Electronics", 14599900, 34],
-  ["Laptop Pro 14", "Electronics", 84200000, 12],
-  ["Wireless Earbuds", "Electronics", 3499900, 58],
-  ["Smartwatch S2", "Electronics", 18900000, 41],
-  ["Mechanical Keyboard", "Electronics", 2650000, 22],
-  ["27in 4K Monitor", "Electronics", 49800000, 9],
-  ["USB-C Dock", "Electronics", 4995000, 15],
-  ["Noise-Cancel Headset", "Electronics", 21950000, 18],
-  ["Wireless Charger", "Electronics", 1850000, 27],
-  ["Bluetooth Speaker", "Electronics", 1620000, 33],
-  ["Webcam 1080p", "Electronics", 925000, 24],
-  ["Gaming Mouse", "Electronics", 2450000, 40],
-  ["Laptop Stand", "Electronics", 1180000, 19],
-  ["HDMI Cable 2m", "Electronics", 700000, 99],
-  ["Wireless Mouse", "Electronics", 1350000, 52],
-  ["Desk Lamp LED", "Electronics", 2100000, 13],
-  ["Portable SSD 1TB", "Electronics", 4560000, 8],
-  ["Smart Doorbell", "Electronics", 3390000, 6],
-  ["Fitness Tracker", "Electronics", 1590000, 28],
-  ["Tablet 10in", "Electronics", 32100000, 10],
-  ["Mens Cotton T-Shirt", "Clothing", 850000, 120],
-  ["Womens Sundress", "Clothing", 1850000, 45],
-  ["Denim Jacket", "Clothing", 5490000, 13],
-  ["Winter Beanie", "Clothing", 450000, 19],
-  ["Running Sneakers", "Clothing", 4650000, 22],
-  ["Leather Belt", "Clothing", 1850000, 37],
-  ["Wool Scarf", "Clothing", 900000, 44],
-  ["Yoga Leggings", "Clothing", 3250000, 30],
-  ["Rain Jacket", "Clothing", 5990000, 11],
-  ["Knit Cardigan", "Clothing", 4250000, 16],
-  ["Canvas Tote Bag", "Clothing", 700000, 61],
-  ["Polo Shirt", "Clothing", 1050000, 58],
-  ["Chino Trousers", "Clothing", 2850000, 25],
-  ["Dress Shirt White", "Clothing", 1950000, 33],
-  ["Learner Python 3.12", "Books", 2750000, 5],
-  ["Clean Architecture Guide", "Books", 3650000, 1],
-  ["Design Systems Handbook", "Books", 4850000, 0], // OOS (PRD §5)
-  ["SQL for Data Engineers", "Books", 2980000, 20],
-  ["Node.js in Action", "Books", 2450000, 42],
-  ["Bare-Metal Postgres", "Books", 4320000, 3],
-  ["The Pragmatic Programmer", "Books", 3120000, 25],
-  ["Atomic Habits", "Books", 2980000, 18],
-  ["Zero to One", "Books", 1845000, 30],
-  ["Designing Data-Intensive Apps", "Books", 5380000, 21],
-  ["Non-Stick Pan Set", "HomeKitchen", 3450000, 17],
-  ["Ceramic Mug Set", "HomeKitchen", 885000, 34],
-  ["Blender 1000W", "HomeKitchen", 2050000, 9],
-  ["Stainless Cookware", "HomeKitchen", 25450000, 4],
-  ["Espresso Maker", "HomeKitchen", 35300000, 7],
-  ["Cutlery Set 21pc", "HomeKitchen", 1325000, 28],
-  ["Cast Iron Skillet", "HomeKitchen", 8900000, 25],
-  ["Insulated Bottle 1L", "HomeKitchen", 540000, 50],
-  ["Pasta Maker", "HomeKitchen", 7700000, 6],
-  ["Space-Saver Organizer", "HomeKitchen", 430000, 73],
-  ["Morning Mug Set", "HomeKitchen", 9010000, 0], // OOS
-  ["Vitamin C Serum 30ml", "Beauty", 908000, 46],
-  ["Hydrating Face Cream", "Beauty", 1275000, 51],
-  ["SPF 50 Sunscreen", "Beauty", 1450000, 89],
-  ["Matte Lipstick", "Beauty", 700000, 0], // OOS (PRD §5)
-  ["Hair Repair Mask", "Beauty", 1670000, 38],
-  ["Exfoliating Scrub", "Beauty", 2050000, 23],
-  ["Rose Toner", "Beauty", 3485000, 15],
-  ["Charcoal Face Mask", "Beauty", 2980000, 17],
+// Curated base categories for realistic e-commerce taxonomy
+const CATEGORY_NAMES = [
+  "Electronics", "Computers", "Smartphones", "Audio", "Cameras", "Wearables",
+  "Men's Fashion", "Women's Fashion", "Kids & Baby", "Footwear", "Watches", "Jewelry",
+  "Home & Kitchen", "Furniture", "Bedding & Bath", "Home Decor", "Kitchen Appliances",
+  "Beauty & Personal Care", "Skincare", "Haircare", "Fragrances", "Health & Wellness",
+  "Sports & Outdoors", "Fitness Equipment", "Outdoor Recreation", "Cycling", "Camping",
+  "Books & Stationery", "Fiction", "Non-Fiction", "Technical Books", "Office Supplies",
+  "Toys & Games", "Board Games", "Video Games", "Musical Instruments",
+  "Automotive Parts", "Tools & Home Improvement", "Pet Supplies", "Groceries & Gourmet"
 ];
 
-// [name, email, phone] — one deliberately UPPERCASE email (PRD §5 ci-unique)
-const CUSTOMERS: [string, string, string][] = [
-  ["Ada Okafor", "ADA.OKAFOR@EXAMPLE.COM", "+2348012345678"],
-  ["Emeka Obi", "emeka.obi@example.com", "+2348023456789"],
-  ["Chidi Nwosu", "chidi.nwosu@example.com", "+2348034567890"],
-  ["Ngozi Adeyemi", "ngozi.adeyemi@example.com", "+2348045678901"],
-  ["Tunde Bakare", "tunde.bakare@example.com", "+2348056789012"],
-  ["Amara Eze", "amara.eze@example.com", "+2348067890123"],
-  ["Yemi Adebayo", "yemi.adebayo@example.com", "+2348078901234"],
-  ["Kelechi Uzo", "kelechi.uzo@example.com", "+2348089012345"],
-  ["Ifeoma Obi", "ifeoma.obi@example.com", "+2348090123456"],
-  ["Bola Salami", "bola.salami@example.com", "+2348101234567"],
-  ["Funke Ojo", "funke.ojo@example.com", "+2348112345678"],
-  ["Segun Ade", "segun.ade@example.com", "+2348123456789"],
-  ["Zainab Musa", "zainab.musa@example.com", "+2348134567890"],
-  ["Obinna Eze", "obinna.eze@example.com", "+2348145678901"],
-  ["Halima Bello", "halima.bello@example.com", "+2348156789012"],
+const ORDER_STATUSES: OrderStatus[] = [
+  OrderStatus.pending,
+  OrderStatus.paid,
+  OrderStatus.shipped,
+  OrderStatus.delivered,
+  OrderStatus.cancelled,
 ];
-
-// Price driven off Product.priceKobo; status spread across all five (PRD §5).
-const STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"] as const;
 
 async function main() {
+  // Deterministic seed for reproducible data generation (PRD §15)
+  faker.seed(42);
+
+  console.log("🌱 Starting seed (destructive clean-and-regenerate)...");
+
+  // Destructive wipe in FK-safe order
   await prisma.$transaction(async (tx) => {
     await tx.orderItem.deleteMany();
     await tx.order.deleteMany();
     await tx.product.deleteMany();
     await tx.category.deleteMany();
     await tx.customer.deleteMany();
-
-    const now = new Date();
-
-    // Categories
-    const catDb = new Map<string, string>();
-    for (const name of Object.values(CAT_NAME)) {
-      const c = await tx.category.create({
-        data: { name, description: `${name} products`, createdAt: now, updatedAt: now },
-      });
-      catDb.set(name, c.id);
-    }
-
-    // Products
-    const productDb = new Map<string, string>();
-    for (const [name, catKey, priceKobo, stockQuantity] of PRODUCTS) {
-      const p = await tx.product.create({
-        data: {
-          name,
-          description: `${name} — ${CAT_NAME[catKey]}`,
-          categoryId: catDb.get(CAT_NAME[catKey])!,
-          price: priceKobo,
-          currency: "NGN",
-          stockQuantity,
-          createdAt: now,
-          updatedAt: now,
-        },
-      });
-      productDb.set(name, p.id);
-    }
-
-    // Customers
-    const customerDb = new Map<string, string>();
-    for (const [name, email, phone] of CUSTOMERS) {
-      const c = await tx.customer.create({
-        data: { name, email, phone, createdAt: now, updatedAt: now },
-      });
-      customerDb.set(email, c.id);
-    }
-
-    // Orders: 30 (PRD §15), all five statuses, deterministic item picks
-    const productNames = [...productDb.keys()];
-    const customerEmails = [...customerDb.keys()];
-    const orders: { customerEmail: string; status: string; itemCount: number }[] = [];
-    for (let i = 0; i < 30; i++) {
-      orders.push({
-        customerEmail: customerEmails[i % customerEmails.length],
-        status: STATUSES[i % STATUSES.length],
-        itemCount: (i % 4) + 1,
-      });
-    }
-
-    for (let i = 0; i < orders.length; i++) {
-      const o = orders[i];
-      const items = [];
-      let totalMinor = 0;
-      for (let j = 0; j < o.itemCount; j++) {
-        const name = productNames[(i * 3 + j) % productNames.length];
-        const quantity = (i % 3) + 1;
-        const unitPrice = productPriceByName(name);
-        items.push({ productId: productDb.get(name)!, quantity, unitPrice });
-        totalMinor += quantity * unitPrice;
-      }
-      await tx.order.create({
-        data: {
-          customerId: customerDb.get(o.customerEmail)!,
-          status: o.status as never,
-          items: { create: items },
-        },
-      });
-    }
   });
 
-  console.log("Seed complete:");
-  console.log("  5 categories, 60 products, 15 customers, 15 orders");
-  console.log("  out-of-stock (stockQuantity 0): Design Systems Handbook, Morning Mug Set, Matte Lipstick");
-  console.log("  UPPERCASE email ADA.OKAFOR@EXAMPLE.COM (case-insensitive unique, PRD §5)");
-  console.log("  all five order statuses present");
-}
+  const now = new Date();
 
-function productPriceByName(name: string): number {
-  const row = PRODUCTS.find(([n]) => n === name)!;
-  return row[2];
+  // 1. Seed Categories (40)
+  console.log(`Generating ${NUM_CATEGORIES} categories...`);
+  const categoryData = CATEGORY_NAMES.slice(0, NUM_CATEGORIES).map((name) => ({
+    name,
+    description: `${name} products and accessories`,
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  // Create categories and retrieve IDs
+  const createdCategories = [];
+  for (const cat of categoryData) {
+    const created = await prisma.category.create({ data: cat });
+    createdCategories.push(created);
+  }
+
+  // 2. Seed Customers (400)
+  console.log(`Generating ${NUM_CUSTOMERS} customers...`);
+  const customerRecords = [];
+  const usedEmails = new Set<string>();
+
+  // Deliberate test customer with uppercase input normalized to lowercase (PRD §5)
+  const specialCustomer = {
+    name: "Ada Okafor",
+    email: "ada.okafor@example.com",
+    phone: "+2348012345678",
+    createdAt: now,
+    updatedAt: now,
+  };
+  usedEmails.add(specialCustomer.email);
+  customerRecords.push(specialCustomer);
+
+  while (customerRecords.length < NUM_CUSTOMERS) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+
+    if (!usedEmails.has(email)) {
+      usedEmails.add(email);
+      customerRecords.push({
+        name: `${firstName} ${lastName}`,
+        email,
+        phone: faker.helpers.fromRegExp(/\+23480[0-9]{8}/),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
+  const createdCustomers = [];
+  for (const cust of customerRecords) {
+    const created = await prisma.customer.create({ data: cust });
+    createdCustomers.push(created);
+  }
+
+  // 3. Seed Products (400)
+  console.log(`Generating ${NUM_PRODUCTS} products...`);
+  const createdProducts = [];
+  for (let i = 0; i < NUM_PRODUCTS; i++) {
+    const category = createdCategories[i % createdCategories.length]!;
+    const name = `${faker.commerce.productName()} ${i + 1}`;
+    const description = `${faker.commerce.productDescription()} [${category.name}]`;
+    // Price in kobo (NGN minor units): e.g., 500 NGN = 50,000 kobo up to 500,000 NGN
+    const price = faker.number.int({ min: 50000, max: 50000000 });
+
+    // Deliberately force out-of-stock products for testing (PRD §15)
+    // Products at indices 7, 14, 21, 28, 35, 42, 49, 56 will have stockQuantity = 0
+    const stockQuantity = i % 7 === 0 && i < 60 ? 0 : faker.number.int({ min: 1, max: 150 });
+
+    const created = await prisma.product.create({
+      data: {
+        name,
+        description,
+        categoryId: category.id,
+        price,
+        currency: "NGN",
+        stockQuantity,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+    createdProducts.push(created);
+  }
+
+  // 4. Seed Orders (800) with 1-5 line items each
+  console.log(`Generating ${NUM_ORDERS} orders...`);
+  for (let i = 0; i < NUM_ORDERS; i++) {
+    const customer = createdCustomers[i % createdCustomers.length]!;
+    // Guaranteed balanced status distribution across all 5 statuses (PRD §15)
+    const status = ORDER_STATUSES[i % ORDER_STATUSES.length]!;
+    const itemCount = (i % 5) + 1; // 1 to 5 items
+
+    const lineItems = [];
+    let totalAmount = 0;
+    const selectedProductIndices = new Set<number>();
+
+    for (let j = 0; j < itemCount; j++) {
+      const productIndex = (i * 3 + j * 7) % createdProducts.length;
+      if (!selectedProductIndices.has(productIndex)) {
+        selectedProductIndices.add(productIndex);
+        const product = createdProducts[productIndex]!;
+        const quantity = ((i + j) % 3) + 1;
+        const unitPrice = product.price; // Snapshotted at current price
+
+        lineItems.push({
+          productId: product.id,
+          quantity,
+          unitPrice,
+        });
+        totalAmount += unitPrice * quantity;
+      }
+    }
+
+    await prisma.order.create({
+      data: {
+        customerId: customer.id,
+        status,
+        totalAmount,
+        currency: "NGN",
+        createdAt: new Date(now.getTime() - i * 60000), // Slightly spread createdAt
+        updatedAt: now,
+        items: {
+          create: lineItems,
+        },
+      },
+    });
+  }
+
+  const categoryCount = await prisma.category.count();
+  const productCount = await prisma.product.count();
+  const oosCount = await prisma.product.count({ where: { stockQuantity: 0 } });
+  const customerCount = await prisma.customer.count();
+  const orderCount = await prisma.order.count();
+  const orderItemCount = await prisma.orderItem.count();
+
+  console.log("✅ Seed completed successfully!");
+  console.log(`   Categories: ${categoryCount}`);
+  console.log(`   Products:   ${productCount} (Out of stock: ${oosCount})`);
+  console.log(`   Customers:  ${customerCount}`);
+  console.log(`   Orders:     ${orderCount}`);
+  console.log(`   OrderItems: ${orderItemCount}`);
 }
 
 main()
-  .then(() => prisma.$disconnect())
-  .catch((e) => {
-    console.error(e);
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error("❌ Seed failed:", e);
+    await prisma.$disconnect();
     process.exit(1);
   });
