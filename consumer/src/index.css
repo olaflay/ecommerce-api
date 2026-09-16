@@ -550,23 +550,35 @@ body {
 }
 
 /* ==========================================================================
-   Empty, Error & Loading States
+   Empty, Error & Loading States (Zero Dead-End UX)
    ========================================================================== */
 
 .m3-state-container {
   background-color: var(--md-sys-color-surface-container-low);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-shape-corner-xl);
-  padding: 5rem 2rem;
+  padding: 4.5rem 2rem;
   text-align: center;
   margin-bottom: 2rem;
   box-shadow: var(--md-sys-elevation-level1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.m3-state-container.error-state {
+  border-color: rgba(242, 184, 181, 0.4);
 }
 
 .state-icon {
-  font-size: 48px;
+  font-size: 56px;
   color: var(--md-sys-color-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.state-icon.error {
+  color: var(--md-sys-color-error);
 }
 
 .state-title {
@@ -576,14 +588,130 @@ body {
 }
 
 .state-subtitle {
+  font: var(--md-sys-typescale-body-large);
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 540px;
+  margin: 0 auto 1.5rem auto;
+  line-height: 1.6;
+}
+
+.m3-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.m3-error-details {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-shape-corner-sm);
+  padding: 0.5rem 1rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  max-width: 600px;
+  word-break: break-word;
+  margin: 0.75rem auto 1.25rem auto;
+}
+
+.health-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: var(--md-sys-typescale-label-medium);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--md-shape-corner-full);
+  margin-top: 0.5rem;
+}
+
+.health-status-badge.online {
+  background-color: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
+}
+
+.health-status-badge.offline {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* Active Filters Chip Strip */
+.m3-active-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: -1rem;
+  margin-bottom: 1.75rem;
+  padding: 0 0.5rem;
+}
+
+.active-filters-label {
+  font: var(--md-sys-typescale-label-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-right: 0.25rem;
+}
+
+.m3-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-shape-corner-sm);
+  padding: 0.3rem 0.65rem;
+  font: var(--md-sys-typescale-label-small);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.m3-filter-tag:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  border-color: var(--md-sys-color-primary);
+}
+
+.m3-filter-tag .remove-icon {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-clear-all-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-small);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.m3-clear-all-btn:hover {
+  filter: brightness(1.2);
+}
+
+/* End of Catalog Bar */
+.m3-end-catalog-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background-color: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-shape-corner-md);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
   font: var(--md-sys-typescale-body-medium);
   color: var(--md-sys-color-on-surface-variant);
 }
 
 /* M3 Circular Progress Indicator */
 .m3-circular-progress {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border: 4px solid var(--md-sys-color-surface-container-highest);
   border-top-color: var(--md-sys-color-primary);
   border-radius: 50%;
@@ -607,3 +735,4 @@ body {
     transform: translateY(0);
   }
 }
+

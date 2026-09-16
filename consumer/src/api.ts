@@ -70,3 +70,15 @@ export async function fetchProducts(
   const payload: CollectionResponse<Product> = await res.json();
   return payload;
 }
+
+export async function checkHealth(signal?: AbortSignal): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/healthz`, { signal });
+    if (!res.ok) return false;
+    const body = await res.json();
+    return body.status === "ok";
+  } catch {
+    return false;
+  }
+}
+
