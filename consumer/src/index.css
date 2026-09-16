@@ -1,9 +1,15 @@
 /* ==========================================================================
    Material Design 3 (M3) Design Token System
-   Tonal Palette, Dynamic Elevation, and Tonal Container Layering System
+   Dynamic theme: every color token is a standard light-dark() value resolved
+   against the CSS `color-scheme` property. The effective scheme follows the
+   OS preference (prefers-color-scheme) by default and can be overridden per
+   subtree via [data-theme="light"|"dark"] on the root element. Components
+   consume tokens only; no component rule hardcodes a color.
    ========================================================================== */
 
 :root {
+  color-scheme: light dark;
+
   /* Typography Scale */
   --md-ref-typeface-brand: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --md-ref-typeface-plain: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -43,50 +49,59 @@
   --md-sys-state-focus-opacity: 0.12;
   --md-sys-state-pressed-opacity: 0.12;
 
-  /* M3 Dark Theme System Colors (Baseline Purple/Indigo Palette) */
-  --md-sys-color-primary: #d0bcff;
-  --md-sys-color-on-primary: #381e72;
-  --md-sys-color-primary-container: #4f378b;
-  --md-sys-color-on-primary-container: #eaddff;
+  /* M3 Baseline Color System (Purple seed) — light-dark() pairs.
+     Effective value = first arg in light scheme, second arg in dark scheme. */
+  --md-sys-color-primary: light-dark(#6750a4, #d0bcff);
+  --md-sys-color-on-primary: light-dark(#ffffff, #381e72);
+  --md-sys-color-primary-container: light-dark(#eaddff, #4f378b);
+  --md-sys-color-on-primary-container: light-dark(#21005d, #eaddff);
 
-  --md-sys-color-secondary: #ccc2dc;
-  --md-sys-color-on-secondary: #332d41;
-  --md-sys-color-secondary-container: #4a4458;
-  --md-sys-color-on-secondary-container: #e8def8;
+  --md-sys-color-secondary: light-dark(#625b71, #ccc2dc);
+  --md-sys-color-on-secondary: light-dark(#ffffff, #332d41);
+  --md-sys-color-secondary-container: light-dark(#e8def8, #4a4458);
+  --md-sys-color-on-secondary-container: light-dark(#1d192b, #e8def8);
 
-  --md-sys-color-tertiary: #efb8c8;
-  --md-sys-color-on-tertiary: #492532;
-  --md-sys-color-tertiary-container: #633b48;
-  --md-sys-color-on-tertiary-container: #ffd8e4;
+  --md-sys-color-tertiary: light-dark(#7d5260, #efb8c8);
+  --md-sys-color-on-tertiary: light-dark(#ffffff, #492532);
+  --md-sys-color-tertiary-container: light-dark(#ffd8e4, #633b48);
+  --md-sys-color-on-tertiary-container: light-dark(#31111d, #ffd8e4);
 
-  --md-sys-color-error: #f2b8b5;
-  --md-sys-color-on-error: #601410;
-  --md-sys-color-error-container: #8c1d18;
-  --md-sys-color-on-error-container: #f9dedc;
+  --md-sys-color-error: light-dark(#b3261e, #f2b8b5);
+  --md-sys-color-on-error: light-dark(#ffffff, #601410);
+  --md-sys-color-error-container: light-dark(#f9dedc, #8c1d18);
+  --md-sys-color-on-error-container: light-dark(#410e0b, #f9dedc);
 
   /* M3 5-Tier Tonal Container Surface Hierarchy */
-  --md-sys-color-background: #141218;
-  --md-sys-color-on-background: #e6e0e9;
-  --md-sys-color-surface: #141218;
-  --md-sys-color-surface-dim: #141218;
-  --md-sys-color-surface-bright: #3b383e;
-  --md-sys-color-surface-container-lowest: #0f0d13;
-  --md-sys-color-surface-container-low: #1d1b20;
-  --md-sys-color-surface-container: #211f26;
-  --md-sys-color-surface-container-high: #2b2930;
-  --md-sys-color-surface-container-highest: #36343b;
+  --md-sys-color-background: light-dark(#fef7ff, #141218);
+  --md-sys-color-on-background: light-dark(#1d1b20, #e6e0e9);
+  --md-sys-color-surface: light-dark(#fef7ff, #141218);
+  --md-sys-color-surface-dim: light-dark(#ded8e1, #141218);
+  --md-sys-color-surface-bright: light-dark(#fef7ff, #3b383e);
+  --md-sys-color-surface-container-lowest: light-dark(#ffffff, #0f0d13);
+  --md-sys-color-surface-container-low: light-dark(#f7f2fa, #1d1b20);
+  --md-sys-color-surface-container: light-dark(#f3edf7, #211f26);
+  --md-sys-color-surface-container-high: light-dark(#ece6f0, #2b2930);
+  --md-sys-color-surface-container-highest: light-dark(#e6e0e9, #36343b);
 
-  --md-sys-color-on-surface: #e6e0e9;
-  --md-sys-color-surface-variant: #49454f;
-  --md-sys-color-on-surface-variant: #cac4d0;
-  --md-sys-color-outline: #938f99;
-  --md-sys-color-outline-variant: #49454f;
+  --md-sys-color-on-surface: light-dark(#1d1b20, #e6e0e9);
+  --md-sys-color-surface-variant: light-dark(#e7e0ec, #49454f);
+  --md-sys-color-on-surface-variant: light-dark(#49454f, #cac4d0);
+  --md-sys-color-outline: light-dark(#79747e, #938f99);
+  --md-sys-color-outline-variant: light-dark(#cac4d0, #49454f);
 
   /* Success Semantic Accent (Extended M3) */
-  --md-sys-color-success: #81c784;
-  --md-sys-color-on-success: #003314;
-  --md-sys-color-success-container: #1b432a;
-  --md-sys-color-on-success-container: #a7f3d0;
+  --md-sys-color-success: light-dark(#2e7d32, #81c784);
+  --md-sys-color-on-success: light-dark(#ffffff, #003314);
+  --md-sys-color-success-container: light-dark(#a7f3d0, #1b432a);
+  --md-sys-color-on-success-container: light-dark(#00391e, #a7f3d0);
+}
+
+/* Manual scheme override (defaults to OS preference via prefers-color-scheme) */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* ==========================================================================
@@ -204,6 +219,27 @@ body {
   box-shadow: 0 0 8px var(--md-sys-color-success);
 }
 
+.api-status-dot.offline {
+  background-color: var(--md-sys-color-error);
+  box-shadow: 0 0 8px var(--md-sys-color-error);
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--md-shape-corner-full);
+  display: grid;
+  place-items: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 /* ==========================================================================
    Tonal Container Layering: Controls & Filter Toolbar
    ========================================================================== */
@@ -319,13 +355,13 @@ body {
 .m3-banner.warning {
   background-color: var(--md-sys-color-tertiary-container);
   color: var(--md-sys-color-on-tertiary-container);
-  border: 1px solid rgba(239, 184, 200, 0.2);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 30%, transparent);
 }
 
 .m3-banner.error {
   background-color: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
-  border: 1px solid rgba(242, 184, 181, 0.2);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
 }
 
 .banner-icon {
@@ -515,7 +551,7 @@ body {
 }
 
 .m3-btn.outlined:hover:not(:disabled) {
-  background-color: rgba(208, 188, 255, 0.08);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
   border-color: var(--md-sys-color-primary);
 }
 
@@ -575,7 +611,7 @@ body {
 }
 
 .m3-state-container.error-state {
-  border-color: rgba(242, 184, 181, 0.4);
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 40%, transparent);
 }
 
 .state-icon {

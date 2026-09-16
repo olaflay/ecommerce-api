@@ -37,6 +37,16 @@ export function App() {
     "idle" | "checking" | "online" | "unreachable"
   >("idle");
 
+  // Theme State (auto follows OS, light/dark forced)
+  type ThemeMode = "auto" | "light" | "dark";
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    try {
+      const saved = localStorage.getItem("catalog-theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch { /* SSR / private-browsing fallback */ }
+    return "auto";
+  });
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const coldStartTimerRef = useRef<number | null>(null);
   const secondsIntervalRef = useRef<number | null>(null);
@@ -45,6 +55,21 @@ export function App() {
   useEffect(() => {
     categoriesLoadedRef.current = categories.length > 0;
   }, [categories]);
+
+  // Sync theme attribute to <html> and persist choice
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "auto") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    localStorage.setItem("catalog-theme", theme);
+  }, [theme]);
+
+  const cycleTheme = useCallback(() => {
+    setTheme((prev) => (prev === "auto" ? "light" : prev === "light" ? "dark" : "auto"));
+  }, []);
+  const themeIcon =
+    theme === "auto" ? "brightness_auto" : theme === "light" ? "light_mode" : "dark_mode";
+  const themeLabel = `Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`;
 
   // Categories Fetcher with Error Resilience
   const loadCategories = useCallback((signal?: AbortSignal) => {
@@ -242,14 +267,24 @@ export function App() {
           <div className="brand-section">
             <span className="brand-label">
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>storefront</span>
-              M3 Catalog Client
+              Catalog Client
             </span>
             <h1 className="page-title">Product Catalog</h1>
           </div>
 
-          <div className="api-endpoint-chip">
-            <span className={`api-status-dot ${isOffline ? "offline" : ""}`}></span>
-            <span>{isOffline ? "Offline Mode" : `API: ${API_BASE_URL}`}</span>
+          <div className="top-bar-right">
+            <button
+              className="m3-btn tonal theme-toggle"
+              onClick={cycleTheme}
+              aria-label={themeLabel}
+              title={themeLabel}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>{themeIcon}</span>
+            </button>
+            <div className="api-endpoint-chip">
+              <span className={`api-status-dot ${isOffline ? "offline" : ""}`}></span>
+              <span>{isOffline ? "Offline Mode" : `API: ${API_BASE_URL}`}</span>
+            </div>
           </div>
         </div>
       </header>
