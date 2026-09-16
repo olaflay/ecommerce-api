@@ -106,8 +106,8 @@ export function App() {
     setOffset(0);
   };
 
-  const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInStockOnly(e.target.checked);
+  const handleToggleInStock = () => {
+    setInStockOnly((prev) => !prev);
     setOffset(0);
   };
 
@@ -143,174 +143,213 @@ export function App() {
   const totalPages = Math.ceil(meta.total / PAGE_LIMIT) || 1;
 
   return (
-    <div className="container">
-      {/* Header */}
-      <header className="header">
-        <div className="brand-badge">Bootcamp Task 1 — Reference Consumer</div>
-        <h1 className="title">Product Catalog</h1>
-        <p className="subtitle">
-          Demonstrating resilient API consumption, cold-start tolerance, and server-side pagination.
-        </p>
-        <span className="api-source-tag">Connected to: {API_BASE_URL}</span>
+    <div className="app-wrapper">
+      {/* M3 Top App Bar */}
+      <header className="m3-top-app-bar">
+        <div className="top-bar-content">
+          <div className="brand-section">
+            <span className="brand-label">
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>storefront</span>
+              M3 Catalog Client
+            </span>
+            <h1 className="page-title">Product Catalog</h1>
+          </div>
+
+          <div className="api-endpoint-chip">
+            <span className="api-status-dot"></span>
+            <span>API: {API_BASE_URL}</span>
+          </div>
+        </div>
       </header>
 
-      {/* Cold-Start Warning Banner (PRD §17 & consumer-app-reliability skill) */}
-      {isColdStarting && (
-        <div className="banner banner-warning" role="alert">
-          <span>⚡</span>
-          <div>
-            <strong>Waking up API on free-tier cloud host...</strong>
-            <p>
-              Free-tier instances (e.g. Render/Railway) sleep during inactivity. Cold starts may take 15–30 seconds.
-            </p>
+      <main className="main-container">
+        {/* Cold Start Notice Banner (PRD §17 & M3 Tonal Alert) */}
+        {isColdStarting && (
+          <div className="m3-banner warning" role="alert">
+            <span className="material-symbols-outlined banner-icon">bolt</span>
+            <div className="banner-content">
+              <h4>Waking up API (Cold Start in Progress)</h4>
+              <p>
+                Free-tier cloud containers sleep during platform idle. Cold-start wakeups may take 15–30 seconds. Thank you for your patience!
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Error Banner */}
-      {errorMessage && (
-        <div className="banner banner-danger" role="alert">
-          <span>⚠️</span>
-          <div>
-            <strong>API Error:</strong> {errorMessage}
+        {/* Error Alert Banner */}
+        {errorMessage && (
+          <div className="m3-banner error" role="alert">
+            <span className="material-symbols-outlined banner-icon">error</span>
+            <div className="banner-content">
+              <h4>Failed to load catalog data</h4>
+              <p>{errorMessage}</p>
+              <button
+                className="m3-btn tonal"
+                onClick={loadProducts}
+                style={{ marginTop: "0.75rem", height: "32px", fontSize: "0.8rem" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>refresh</span>
+                Retry Request
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* M3 Tonal Toolbar (Layered Surface Container) */}
+        <section className="m3-tonal-toolbar" aria-label="Catalog Filters & Controls">
+          <div className="toolbar-controls">
+            {/* Category Dropdown */}
+            <div className="m3-input-field">
+              <span className="material-symbols-outlined">category</span>
+              <select
+                className="m3-select"
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+                aria-label="Filter products by category"
+              >
+                <option value="">All Categories ({categories.length})</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sort Selector */}
+            <div className="m3-input-field">
+              <span className="material-symbols-outlined">sort</span>
+              <select
+                className="m3-select"
+                value={`${sortBy}_${sortOrder}`}
+                onChange={handleSortChange}
+                aria-label="Sort products"
+              >
+                <option value="createdAt_desc">Newest First</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="name_asc">Alphabetical: A to Z</option>
+              </select>
+            </div>
+
+            {/* M3 Filter Chip: In-Stock Only */}
             <button
-              onClick={loadProducts}
-              style={{
-                display: "block",
-                marginTop: "0.5rem",
-                background: "transparent",
-                border: "1px solid currentColor",
-                color: "inherit",
-                padding: "0.25rem 0.75rem",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
+              type="button"
+              className={`m3-filter-chip ${inStockOnly ? "active" : ""}`}
+              onClick={handleToggleInStock}
+              aria-pressed={inStockOnly}
             >
-              Retry
+              <span className="material-symbols-outlined">
+                {inStockOnly ? "check" : "inventory_2"}
+              </span>
+              In-Stock Only
             </button>
           </div>
-        </div>
-      )}
 
-      {/* Toolbar Controls */}
-      <div className="toolbar">
-        <div className="filter-group">
-          {/* Category Filter */}
-          <select
-            className="select-control"
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            aria-label="Filter by category"
-          >
-            <option value="">All Categories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="toolbar-metrics">
+            Showing {meta.total > 0 ? offset + 1 : 0}–
+            {Math.min(offset + PAGE_LIMIT, meta.total)} of {meta.total} products
+          </div>
+        </section>
 
-          {/* Sort Selector */}
-          <select
-            className="select-control"
-            value={`${sortBy}_${sortOrder}`}
-            onChange={handleSortChange}
-            aria-label="Sort products"
-          >
-            <option value="createdAt_desc">Newest First</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="name_asc">Name: A to Z</option>
-          </select>
+        {/* Product Cards Grid with M3 Tonal Layering */}
+        {isLoading && products.length === 0 ? (
+          <div className="m3-state-container">
+            <div className="m3-circular-progress"></div>
+            <h3 className="state-title">Loading Catalog</h3>
+            <p className="state-subtitle">Querying product database...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="m3-state-container">
+            <span className="material-symbols-outlined state-icon">search_off</span>
+            <h3 className="state-title">No products found</h3>
+            <p className="state-subtitle">Try clearing or adjusting your category and stock filters.</p>
+          </div>
+        ) : (
+          <div className="m3-card-grid">
+            {products.map((product) => {
+              const isInStock = product.stockQuantity > 0;
+              return (
+                <article key={product.id} className="m3-card">
+                  <div>
+                    <div className="card-top">
+                      <span className="m3-badge category">
+                        {product.category?.name || "General"}
+                      </span>
+                      <span
+                        className={`m3-badge ${
+                          isInStock ? "in-stock" : "out-of-stock"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+                          {isInStock ? "check_circle" : "cancel"}
+                        </span>
+                        {isInStock ? `${product.stockQuantity} in stock` : "Out of stock"}
+                      </span>
+                    </div>
 
-          {/* In Stock Toggle */}
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              className="checkbox-control"
-              checked={inStockOnly}
-              onChange={handleStockChange}
-            />
-            In Stock Only
-          </label>
-        </div>
+                    <h2 className="card-title">{product.name}</h2>
+                    <p className="card-description">
+                      {product.description || "No product description provided."}
+                    </p>
+                  </div>
 
-        <div className="page-info">
-          Showing {meta.total > 0 ? offset + 1 : 0}–
-          {Math.min(offset + PAGE_LIMIT, meta.total)} of {meta.total} products
-        </div>
-      </div>
+                  <div className="card-bottom">
+                    <div className="price-container">
+                      <span className="price-label">Price</span>
+                      <span className="price-value">{formatMoney(product.price)}</span>
+                    </div>
 
-      {/* Content Area */}
-      {isLoading && products.length === 0 ? (
-        <div className="state-box">
-          <div className="spinner"></div>
-          <h3>Loading products...</h3>
-          <p>Querying catalog database...</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="state-box">
-          <h3>No products match your criteria</h3>
-          <p>Try clearing filters or selecting another category.</p>
-        </div>
-      ) : (
-        <div className="product-grid">
-          {products.map((p) => {
-            const isInStock = p.stockQuantity > 0;
-            return (
-              <article key={p.id} className="product-card">
-                <div>
-                  <div className="product-header">
-                    <span className="category-tag">
-                      {p.category?.name || "General"}
-                    </span>
                     <span
-                      className={`stock-badge ${
-                        isInStock ? "in-stock" : "out-of-stock"
-                      }`}
+                      className="m3-badge"
+                      style={{
+                        background: "var(--md-sys-color-surface-container-highest)",
+                        color: "var(--md-sys-color-on-surface-variant)",
+                      }}
                     >
-                      {isInStock ? `● ${p.stockQuantity} in stock` : "✕ Out of Stock"}
+                      NGN
                     </span>
                   </div>
-                  <h2 className="product-name">{p.name}</h2>
-                  <p className="product-description">{p.description || "No description provided."}</p>
-                </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
 
-                <div className="product-footer">
-                  <div className="price">{formatMoney(p.price)}</div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+        {/* M3 Tonal Pagination Bar */}
+        <footer className="m3-pagination-bar" aria-label="Pagination">
+          <div className="pagination-stats">
+            <span className="material-symbols-outlined">pages</span>
+            <span>
+              Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> ({meta.total} items)
+            </span>
+          </div>
 
-      {/* Pagination Footer */}
-      <footer className="pagination">
-        <div className="page-info">
-          Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-        </div>
+          <div className="pagination-nav">
+            <button
+              className="m3-btn outlined"
+              onClick={handlePrevPage}
+              disabled={offset === 0 || isLoading}
+              aria-label="Previous Page"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+              Previous
+            </button>
 
-        <div className="pagination-buttons">
-          <button
-            className="btn"
-            onClick={handlePrevPage}
-            disabled={offset === 0 || isLoading}
-            aria-label="Previous Page"
-          >
-            ← Previous
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={handleNextPage}
-            disabled={!meta.hasMore || isLoading}
-            aria-label="Next Page"
-          >
-            Next →
-          </button>
-        </div>
-      </footer>
+            <button
+              className="m3-btn filled"
+              onClick={handleNextPage}
+              disabled={!meta.hasMore || isLoading}
+              aria-label="Next Page"
+            >
+              Next
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+        </footer>
+      </main>
     </div>
   );
 }
+
 export default App;
