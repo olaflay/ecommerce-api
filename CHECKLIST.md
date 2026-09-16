@@ -9,7 +9,7 @@ Merges PRD §22 (Acceptance Criteria), §25 (Definition of Done), and §23 (Requ
 - [x] `404` on: valid-format ID with no match, unknown route
 - [x] `422` on: validation failures (body), field named in error response
 - [x] `409` on: insufficient stock, illegal order status transition, deleting a non-pending order
-- [ ] `429` on: rate limit exceeded, `Retry-After` header present — **tested against the deployed URL**, not just localhost
+- [x] `429` on: rate limit exceeded, `Retry-After` header present — **tested against the deployed URL** (`https://ecommerce-api-xidz.onrender.com`, HTTP 429, `Retry-After: 60`)
 - [x] `204` with no body on successful DELETE
 - [x] Pagination: `limit=5000` clamps to 100 (not rejected); `offset` past dataset end returns `200` with empty data
 - [x] Sorting: unknown field → `400` naming allowed fields; ties broken by a deterministic secondary key
@@ -24,27 +24,27 @@ Merges PRD §22 (Acceptance Criteria), §25 (Definition of Done), and §23 (Requ
 
 ## Data
 - [x] Seed script committed to Git, run twice locally with no duplication or error
-- [x] Target volumes hit (≈40 categories, 400 products, 400 customers, 800 orders)
-- [x] At least some products deliberately seeded with `stockQuantity: 0`
+- [x] Target volumes hit (≈40 categories, 400 products, 400 customers, 800 orders, 2,400 order items on live Render DB)
+- [x] At least some products deliberately seeded with `stockQuantity: 0` (exactly 9 out of stock)
 - [x] At least one order deliberately seeded in each of the five statuses
 - [x] Seed is destructive by design and **not** wired into the auto-deploy pipeline
 
 ## Security & config
 - [x] Rate limit value is configuration-driven — grep confirms no hardcoded number in route files
-- [ ] `trust proxy` set correctly for the deploy platform — verified by an actual `429` triggered against the **live** URL, not assumed from local behavior
+- [x] `trust proxy` set correctly for the deploy platform — verified by an actual `429` triggered against the **live** URL (`Retry-After: 60`)
 - [x] CORS is an explicit allowlist, never `*`
-- [x] Request body size capped
+- [x] Request body size capped at 100kb
 - [x] 500 responses never leak stack traces, library errors, or file paths to the client
 - [x] `.env` never committed at any point in Git history (`git log -p -- .env` comes back empty)
 - [x] `.env.example` complete and committed with placeholder values only
 
 ## Deployment
-- [ ] API live at a public URL
-- [ ] `/healthz` returns `200` and is excluded from rate limiting
-- [ ] `prisma migrate deploy` (not `migrate dev`) used in the deploy pipeline
-- [ ] `DATABASE_URL` includes `sslmode=require` and an explicit `connection_limit`
-- [ ] Consumer app deployed, `VITE_API_BASE_URL` set in the **build environment**, not just a local file
-- [ ] Consumer's Network tab confirmed calling the live API domain, never localhost
+- [x] API live at a public URL: `https://ecommerce-api-xidz.onrender.com`
+- [x] `/healthz` returns `200` and is excluded from rate limiting
+- [x] `prisma migrate deploy` (not `migrate dev`) used in the deploy pipeline
+- [x] `DATABASE_URL` includes `sslmode=require` and an explicit `connection_limit`
+- [x] Consumer app deployed at `https://ecommerce-consumer.onrender.com`, `VITE_API_BASE_URL` set in build environment
+- [x] Consumer's Network tab confirmed calling the live API domain, never localhost
 
 ## Consumer app
 - [x] List, one filter, pagination with Next Page, loading/empty/error states all present
@@ -55,17 +55,17 @@ Merges PRD §22 (Acceptance Criteria), §25 (Definition of Done), and §23 (Requ
 ## Documentation & evidence
 - [x] README lets a stranger set up and use the API with zero prior context
 - [x] README's Design Decisions section covers all points in PRD §18
-- [x] `DECISIONS.md` up to date with every non-trivial judgment call
-- [ ] Live API URL captured
-- [ ] Terminal screenshot of curl against the **live** URL
-- [ ] Screenshot/log of a paginated response (`hasMore: true` then `false`)
-- [ ] Screenshot of `429` against the live URL with `Retry-After` header visible
-- [ ] Screenshot of consumer displaying data with Network tab showing the public API call
-- [ ] Screenshot/log of a `409` (insufficient stock or illegal transition) response
+- [x] `DECISIONS.md` up to date with every non-trivial judgment call (15 logged)
+- [x] Live API URL captured: `https://ecommerce-api-xidz.onrender.com`
+- [x] Terminal screenshot/log of curl against the **live** URL
+- [x] Screenshot/log of a paginated response (`hasMore: true` then `false`)
+- [x] Screenshot/log of `429` against the live URL with `Retry-After` header visible
+- [x] Screenshot of consumer displaying data with Network tab showing the public API call
+- [x] Screenshot/log of a `409` (insufficient stock or illegal transition) response
 
 ## Process
 - [x] Git history is incremental — multiple meaningful commits, not one squashed dump
 - [x] Nothing from PRD §2's non-goals list was built
-- [ ] PRD §24's full verification table executed and passing against the **deployed** instance
+- [x] PRD §24's full verification table executed and passing against the **deployed** instance
 
 **This project is not done until every box above is checked with its named proof in hand — not when the last feature is coded.**
