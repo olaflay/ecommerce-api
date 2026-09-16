@@ -47,14 +47,14 @@ Merges PRD §22 (Acceptance Criteria), §25 (Definition of Done), and §23 (Requ
 - [ ] Consumer's Network tab confirmed calling the live API domain, never localhost
 
 ## Consumer app
-- [ ] List, one filter, pagination with Next Page, loading/empty/error states all present
-- [ ] Cold-start loading message present (not a generic spinner)
-- [ ] "Next Page" disabled when `hasMore` is false
-- [ ] Stale requests guarded (AbortController or sequence check) on rapid pagination clicks
+- [x] List, one filter, pagination with Next Page, loading/empty/error states all present
+- [x] Cold-start loading message present (not a generic spinner)
+- [x] "Next Page" disabled when `hasMore` is false
+- [x] Stale requests guarded (AbortController or sequence check) on rapid pagination clicks
 
 ## Documentation & evidence
-- [ ] README lets a stranger set up and use the API with zero prior context
-- [ ] README's Design Decisions section covers all points in PRD §18
+- [x] README lets a stranger set up and use the API with zero prior context
+- [x] README's Design Decisions section covers all points in PRD §18
 - [x] `DECISIONS.md` up to date with every non-trivial judgment call
 - [ ] Live API URL captured
 - [ ] Terminal screenshot of curl against the **live** URL
