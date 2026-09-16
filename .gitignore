@@ -7,3 +7,5 @@ dist/
 coverage/
 consumer/dist/
 consumer/node_modules/
+.playwright-mcp/
+reviews/
