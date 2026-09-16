@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  delivered
+  cancelled
+}
+
+model Customer {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(100)
+  email     String    @unique @db.VarChar(255)
+  phone     String?   @db.VarChar(20)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Order[]
+
+  @@map("Customer")
+}
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique @db.VarChar(60)
+  description String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@map("Category")
+}
+
+model Product {
+  id            String    @id @default(uuid()) @db.Uuid
+  categoryId    String    @db.Uuid
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name          String    @db.VarChar(150)
+  description   String?   @db.VarChar(2000)
+  price         Int
+  currency      String    @default("NGN") @db.VarChar(3)
+  stockQuantity Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orderItems    OrderItem[]
+
+  @@index([categoryId])
+  @@index([price])
+  @@map("Product")
+}
+
+model Order {
+  id          String       @id @default(uuid()) @db.Uuid
+  customerId  String       @db.Uuid
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  status      OrderStatus  @default(pending)
+  totalAmount Int          @default(0)
+  currency    String       @default("NGN") @db.VarChar(3)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  items       OrderItem[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("Order")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String   @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+  unitPrice Int
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("OrderItem")
+}

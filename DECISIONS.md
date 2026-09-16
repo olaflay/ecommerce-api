@@ -1,0 +1,15 @@
+# DECISIONS.md — Architecture & Technical Decision Log
+
+Every non-trivial design decision, edge case resolution, or deviation from default convention is logged here per PRD §26.12 and AGENTS.md Constitution Rule 8.
+
+| # | Date | Context / Decision | Alternatives Considered | Rationale |
+|---|---|---|---|---|
+| 1 | 2026-09-15 | Money representation: integers in minor units (kobo, NGN). | Float, Decimal/Numeric. | PRD §4 & §6: Avoid rounding and precision loss in currency calculations; integer kobo is exact and standard. |
+| 2 | 2026-09-15 | Identifiers: UUID v4 everywhere (`db.Uuid`). | Auto-increment serial integers. | PRD §4 & §21: Prevents enumeration attacks and matches multi-tenant/public API standards. |
+| 3 | 2026-09-15 | Local PostgreSQL port set to `5434` in `.env` (Docker container `ecommerce-pg`). | Standard `5432`. | Avoids port conflicts with pre-existing local Postgres services on port 5432. |
+| 4 | 2026-09-15 | Destructive truncate-and-regenerate seed strategy. | Non-destructive `upsert`. | PRD §15: Faker has no stable natural keys. Clean wipe guarantees deterministic row counts and zero drift across seed runs. |
+| 5 | 2026-09-15 | Case-insensitive email uniqueness via lowercasing on write. | Citext extension or raw Postgres lower() index. | Consistent cross-platform behavior; ensures `ADA.OKAFOR@EXAMPLE.COM` matches `ada.okafor@example.com` cleanly across all environments. |
+| 6 | 2026-09-16 | Mutation requests on read-only endpoints (e.g., `POST /api/v1/products`) return `404 Not Found` with standard error envelope. | `405 Method Not Allowed`. | Express routing does not mount unhandled methods on those paths, matching standard REST router behavior while returning a consistent error envelope. |
+| 7 | 2026-09-16 | Exclude `/healthz` from rate limiting. | Rate limit `/healthz` with high threshold. | PRD §13 & §20: Hosting uptime monitors (Render/Railway) must never exhaust quota or cause false-positive downtime alerts. |
+| 8 | 2026-09-16 | Duplicate product IDs in a single order creation request are merged by summing quantities. | Reject with `400`/`422`, or create duplicate line items. | PRD §6: Clean UX and database constraint hygiene; merges items before checking stock and snapshotting prices. |
+| 9 | 2026-09-16 | Config validation with Zod fails fast on boot. | Runtime lazy evaluation. | PRD §20: Fails immediately at startup if any required environment variable is missing, avoiding runtime crashes. |
