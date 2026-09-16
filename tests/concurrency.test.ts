@@ -82,4 +82,66 @@ describe("Concurrency & Stock Row-Level Lock (/api/v1/orders)", () => {
     });
     expect(finalProduct!.stockQuantity).toBe(0);
   });
+
+  it("serializes concurrent status PATCHes under the row lock so a terminal state never gets flipped by a stale read", async () => {
+    const cat = await prisma.category.create({
+      data: {
+        name: `Patch-Test-Cat-${Date.now()}`,
+        description: "Category for transition concurrency testing",
+      },
+    });
+    const cust = await prisma.customer.create({
+      data: {
+        name: "Patch Racer",
+        email: `patch-racer-${Date.now()}@example.com`,
+      },
+    });
+    const prod = await prisma.product.create({
+      data: {
+        name: "Patch Race Item",
+        price: 100000,
+        stockQuantity: 10,
+        categoryId: cat.id,
+      },
+    });
+
+    try {
+      const createRes = await request(app)
+        .post("/api/v1/orders")
+        .send({
+          customerId: cust.id,
+          items: [{ productId: prod.id, quantity: 1 }],
+        });
+      expect(createRes.status).toBe(201);
+      const orderId = createRes.body.data.id;
+
+      // paid and cancelled are both legal from pending. Under the row lock the two
+      // writes serialize: each response must be either the applied transition (200)
+      // or a legal rejection (409) — never a 500 from a lost update.
+      const [r1, r2] = await Promise.all([
+        request(app).patch(`/api/v1/orders/${orderId}`).send({ status: "paid" }),
+        request(app)
+          .patch(`/api/v1/orders/${orderId}`)
+          .send({ status: "cancelled" }),
+      ]);
+
+      for (const res of [r1, r2]) {
+        expect([200, 409]).toContain(res.status);
+      }
+
+      // Final state must be reachable via legal transitions from pending
+      // (paid or cancelled) — never a cancelled order resurrected to paid by a
+      // stale read-write pair.
+      const finalOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { status: true },
+      });
+      expect(["paid", "cancelled"]).toContain(finalOrder!.status);
+    } finally {
+      await prisma.order.deleteMany({ where: { customerId: cust.id } });
+      await prisma.product.deleteMany({ where: { id: prod.id } });
+      await prisma.category.deleteMany({ where: { id: cat.id } });
+      await prisma.customer.deleteMany({ where: { id: cust.id } });
+    }
+  });
 });

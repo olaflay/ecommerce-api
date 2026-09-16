@@ -351,6 +351,13 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  transition: opacity 0.2s ease;
+}
+
+/* Dim the stale catalog while a refetch (filter/pagination) is in flight */
+.m3-card-grid.loading {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 /* Elevated / Outlined M3 Card Container */

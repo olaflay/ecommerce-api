@@ -11,6 +11,27 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   [OrderStatus.cancelled]: [],
 };
 
+const ORDER_FULL_INCLUDE = {
+  customer: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+  items: {
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.OrderInclude;
+
 export class OrderService {
   static async createOrder(input: CreateOrderInput) {
     // 1. Verify customer exists (PRD §6 step 6)
@@ -119,26 +140,7 @@ export class OrderService {
   static async getOrderById(id: string) {
     const order = await prisma.order.findUnique({
       where: { id },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
-      },
+      include: ORDER_FULL_INCLUDE,
     });
 
     if (!order) {
@@ -149,97 +151,73 @@ export class OrderService {
   }
 
   static async updateOrderStatus(id: string, newStatus: OrderStatus) {
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<
+        Array<{ id: string; status: OrderStatus }>
+      >`SELECT id, status FROM "Order" WHERE id = ${id}::uuid FOR UPDATE`;
 
-    if (!order) {
-      throw new NotFoundError("Order not found");
-    }
+      if (rows.length === 0) {
+        throw new NotFoundError("Order not found");
+      }
 
-    // Idempotent same-status PATCH is a no-op 200 (PRD §6)
-    if (order.status === newStatus) {
-      return order;
-    }
+      const currentStatus = rows[0]!.status;
 
-    // Validate state machine transition (PRD §6)
-    const allowed = ALLOWED_TRANSITIONS[order.status];
-    if (!allowed.includes(newStatus)) {
-      throw new ConflictError(
-        `Illegal status transition from "${order.status}" to "${newStatus}". Allowed transitions: ${
-          allowed.length ? allowed.join(", ") : "none (terminal state)"
-        }`
-      );
-    }
+      // Idempotent same-status PATCH is a no-op 200 (PRD §6)
+      if (currentStatus === newStatus) {
+        return tx.order.findUniqueOrThrow({
+          where: { id },
+          include: ORDER_FULL_INCLUDE,
+        });
+      }
 
-    const updated = await prisma.order.update({
-      where: { id },
-      data: { status: newStatus },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
-      },
+      // Validate state machine transition (PRD §6) while holding the row lock so a
+      // concurrent PATCH cannot move the order into a state that makes this
+      // transition illegal between read and write.
+      const allowed = ALLOWED_TRANSITIONS[currentStatus];
+      if (!allowed.includes(newStatus)) {
+        throw new ConflictError(
+          `Illegal status transition from "${currentStatus}" to "${newStatus}". Allowed transitions: ${
+            allowed.length ? allowed.join(", ") : "none (terminal state)"
+          }`
+        );
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: { status: newStatus },
+        include: ORDER_FULL_INCLUDE,
+      });
     });
 
     return updated;
   }
 
   static async deletePendingOrder(id: string) {
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-
-    if (!order) {
-      throw new NotFoundError("Order not found");
-    }
-
-    // Only pending orders can be deleted (PRD §6)
-    if (order.status !== OrderStatus.pending) {
-      throw new ConflictError(
-        `Cannot delete an order with status "${order.status}". Only pending orders can be deleted.`
-      );
-    }
-
-    // Restock inventory and delete order atomically (PRD §6)
     await prisma.$transaction(async (tx) => {
-      for (const item of order.items) {
+      const rows = await tx.$queryRaw<
+        Array<{ id: string; status: OrderStatus }>
+      >`SELECT id, status FROM "Order" WHERE id = ${id}::uuid FOR UPDATE`;
+
+      if (rows.length === 0) {
+        throw new NotFoundError("Order not found");
+      }
+
+      // Only pending orders can be deleted (PRD §6); the row lock also serializes
+      // against a concurrent status PATCH, so an order moved out of pending cannot
+      // be deleted on a stale read.
+      if (rows[0]!.status !== OrderStatus.pending) {
+        throw new ConflictError(
+          `Cannot delete an order with status "${rows[0]!.status}". Only pending orders can be deleted.`
+        );
+      }
+
+      const items = await tx.orderItem.findMany({
+        where: { orderId: id },
+        select: { productId: true, quantity: true },
+      });
+
+      // Restock inventory and delete order atomically (PRD §6)
+      for (const item of items) {
         await tx.product.update({
           where: { id: item.productId },
           data: {

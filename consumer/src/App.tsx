@@ -40,6 +40,11 @@ export function App() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const coldStartTimerRef = useRef<number | null>(null);
   const secondsIntervalRef = useRef<number | null>(null);
+  const categoriesLoadedRef = useRef(categories.length > 0);
+
+  useEffect(() => {
+    categoriesLoadedRef.current = categories.length > 0;
+  }, [categories]);
 
   // Categories Fetcher with Error Resilience
   const loadCategories = useCallback((signal?: AbortSignal) => {
@@ -125,7 +130,7 @@ export function App() {
         setMeta(res.meta);
         setErrorMessage(null);
         // If categories were empty due to earlier cold start, retry fetching them now that server is confirmed awake
-        if (categories.length === 0) {
+        if (!categoriesLoadedRef.current) {
           loadCategories();
         }
       })
@@ -144,7 +149,7 @@ export function App() {
         setIsLoading(false);
         setIsColdStarting(false);
       });
-  }, [offset, selectedCategory, inStockOnly, sortBy, sortOrder, categories.length, loadCategories]);
+  }, [offset, selectedCategory, inStockOnly, sortBy, sortOrder, loadCategories]);
 
   useEffect(() => {
     loadProducts();
@@ -458,7 +463,10 @@ export function App() {
         ) : (
           /* State Container 4: Product Grid */
           <>
-            <div className="m3-card-grid">
+            <div
+              className={`m3-card-grid${isLoading ? " loading" : ""}`}
+              aria-busy={isLoading}
+            >
               {products.map((product) => {
                 const isInStock = product.stockQuantity > 0;
                 return (
