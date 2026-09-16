@@ -25,12 +25,13 @@ services:
         value: "100"
 
   # 2. Frontend Consumer Client (Static Site)
-  - type: static
+  - type: web
     name: ecommerce-consumer
+    runtime: static
     plan: free
     region: oregon
     buildCommand: cd consumer && npm install && npm run build
-    staticPublishPath: consumer/dist
+    staticPublishPath: ./consumer/dist
     routes:
       - type: rewrite
         source: /*
