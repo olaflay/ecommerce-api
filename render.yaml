@@ -28,10 +28,9 @@ services:
   - type: web
     name: ecommerce-consumer
     runtime: static
-    plan: free
-    region: oregon
-    buildCommand: cd consumer && npm install && npm run build
-    staticPublishPath: ./consumer/dist
+    rootDir: consumer
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*
