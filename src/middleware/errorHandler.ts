@@ -73,7 +73,10 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   // Unexpected internal server error (500)
-  const correlationId = (req.headers["x-request-id"] as string) || randomUUID();
+  const correlationId =
+    (req as Request & { correlationId?: string }).correlationId ||
+    (req.headers["x-request-id"] as string) ||
+    randomUUID();
   console.error(`[INTERNAL_ERROR][${correlationId}]`, err);
 
   res.status(500).json({

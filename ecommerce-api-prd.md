@@ -430,6 +430,9 @@ Faker.js, run via `npm run seed` → `prisma/seed.ts`, wired into `package.json`
 ---
 
 ## 16. Project Structure
+
+> Comprehensive system design, database invariants, and concurrency topology are detailed in [SYSTEM_DESIGN.md](file:///c:/Users/ADMIN/Documents/ecommerce%20api/SYSTEM_DESIGN.md).
+
 ```
 src/
   routes/          # thin route definitions, one file per resource

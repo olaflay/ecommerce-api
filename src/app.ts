@@ -3,6 +3,7 @@ import express, { Request, Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { config } from "./config/index.js";
+import { correlationIdMiddleware } from "./middleware/correlationId.js";
 import { rateLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
@@ -16,6 +17,9 @@ export const app = express();
 
 // Trust proxy for production deployment behind reverse proxies (Render / Railway)
 app.set("trust proxy", 1);
+
+// Attach request correlation ID early for end-to-end tracing
+app.use(correlationIdMiddleware);
 
 // Security headers & CORS
 app.use(helmet());
