@@ -20,6 +20,7 @@ export type ErrorCode =
   | "VALIDATION_ERROR"
   | "CONFLICT"
   | "RATE_LIMITED"
+  | "PAYLOAD_TOO_LARGE"
   | "INTERNAL_ERROR";
 
 export interface ErrorEnvelope {

@@ -55,7 +55,8 @@ export class OrderService {
     const productIds = mergedItems.map((i) => i.productId);
 
     // 3. Execute inside an interactive transaction with row-level locking (PRD §6 step 9)
-    const createdOrder = await prisma.$transaction(async (tx) => {
+    const createdOrder = await prisma.$transaction(
+      async (tx) => {
       // Row-level lock via SELECT ... FOR UPDATE ensures race safety under concurrent requests
       const lockedProducts = await tx.$queryRaw<
         Array<{ id: string; name: string; price: number; stockQuantity: number }>
@@ -132,7 +133,8 @@ export class OrderService {
           },
         },
       });
-    });
+    },
+    { maxWait: 10000, timeout: 20000 });
 
     return createdOrder;
   }
@@ -187,48 +189,52 @@ export class OrderService {
         data: { status: newStatus },
         include: ORDER_FULL_INCLUDE,
       });
-    });
+    },
+    { maxWait: 10000, timeout: 20000 });
 
     return updated;
   }
 
   static async deletePendingOrder(id: string) {
-    await prisma.$transaction(async (tx) => {
-      const rows = await tx.$queryRaw<
-        Array<{ id: string; status: OrderStatus }>
-      >`SELECT id, status FROM "Order" WHERE id = ${id}::uuid FOR UPDATE`;
+    await prisma.$transaction(
+      async (tx) => {
+        const rows = await tx.$queryRaw<
+          Array<{ id: string; status: OrderStatus }>
+        >`SELECT id, status FROM "Order" WHERE id = ${id}::uuid FOR UPDATE`;
 
-      if (rows.length === 0) {
-        throw new NotFoundError("Order not found");
-      }
+        if (rows.length === 0) {
+          throw new NotFoundError("Order not found");
+        }
 
-      // Only pending orders can be deleted (PRD §6); the row lock also serializes
-      // against a concurrent status PATCH, so an order moved out of pending cannot
-      // be deleted on a stale read.
-      if (rows[0]!.status !== OrderStatus.pending) {
-        throw new ConflictError(
-          `Cannot delete an order with status "${rows[0]!.status}". Only pending orders can be deleted.`
-        );
-      }
+        // Only pending orders can be deleted (PRD §6); the row lock also serializes
+        // against a concurrent status PATCH, so an order moved out of pending cannot
+        // be deleted on a stale read.
+        if (rows[0]!.status !== OrderStatus.pending) {
+          throw new ConflictError(
+            `Cannot delete an order with status "${rows[0]!.status}". Only pending orders can be deleted.`
+          );
+        }
 
-      const items = await tx.orderItem.findMany({
-        where: { orderId: id },
-        select: { productId: true, quantity: true },
-      });
-
-      // Restock inventory and delete order atomically (PRD §6)
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stockQuantity: { increment: item.quantity },
-          },
+        const items = await tx.orderItem.findMany({
+          where: { orderId: id },
+          select: { productId: true, quantity: true },
         });
-      }
 
-      await tx.order.delete({
-        where: { id },
-      });
-    });
+        // Restock inventory and delete order atomically (PRD §6)
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: { increment: item.quantity },
+            },
+          });
+        }
+
+        await tx.order.delete({
+          where: { id },
+        });
+      },
+      { maxWait: 10000, timeout: 20000 }
+    );
   }
 }

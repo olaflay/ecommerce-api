@@ -21,6 +21,20 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
+  // Payload too large error from body-parser (413)
+  if (
+    (typeof err === "object" && err !== null && "type" in err && (err as { type: unknown }).type === "entity.too.large") ||
+    (typeof err === "object" && err !== null && "status" in err && (err as { status: unknown }).status === 413)
+  ) {
+    res.status(413).json({
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: "Request payload exceeds size limit of 100kb",
+      },
+    } satisfies ErrorEnvelope);
+    return;
+  }
+
   // Application-defined domain error
   if (err instanceof AppError) {
     const payload: ErrorEnvelope = {
@@ -70,6 +84,17 @@ export const errorHandler: ErrorRequestHandler = (
       } satisfies ErrorEnvelope);
       return;
     }
+  }
+
+  // Prisma validation error (e.g., input out of database range / malformed value)
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    res.status(400).json({
+      error: {
+        code: "BAD_REQUEST",
+        message: "Invalid request parameter value or database input out of range",
+      },
+    } satisfies ErrorEnvelope);
+    return;
   }
 
   // Unexpected internal server error (500)

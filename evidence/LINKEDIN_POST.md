@@ -42,6 +42,9 @@ If an order is cancelled or deleted while still in "pending" status, inventory i
 
 The full API is live on Render with automated seed data (400 products, 40 categories, 800 orders) and paired with a Material Design 3 catalog frontend.
 
+Paste and run this live curl command in your terminal:
+curl -i "https://ecommerce-api-xidz.onrender.com/api/v1/products?limit=2&offset=0"
+
 Live frontend: https://ecommerce-consumer.onrender.com
 Live API: https://ecommerce-api-xidz.onrender.com
 GitHub: https://github.com/olaflay/ecommerce-api
@@ -72,7 +75,8 @@ An order status should never be freely editable. I set up strict transition guar
 pending ➔ paid ➔ shipped ➔ delivered.
 If a client tries to PATCH a "delivered" order back to "pending", the API rejects it with a 409 Conflict. You can't issue a return by exploiting an unguarded update route.
 
-I deployed both the API and a React catalog frontend to Render, backed by a managed PostgreSQL database.
+Try it yourself with this live curl command:
+curl -i "https://ecommerce-api-xidz.onrender.com/api/v1/products?limit=2&inStock=true"
 
 Frontend: https://ecommerce-consumer.onrender.com
 API: https://ecommerce-api-xidz.onrender.com
@@ -83,7 +87,41 @@ If you're building an e-commerce backend right now, what was the most annoying e
 
 ---
 
-## Option 3: Short, Punchy & Direct (Under 60 Seconds Read)
+## Option 3: "What Happens When Someone Asks for 5,000 Records?" (Query Safety & Clamping)
+*Angle: Practical API Engineering & Defense*
+
+```text
+What does your API do when a client requests `?limit=5000`?
+
+If you honour it without question, one scraper or heavy user will exhaust your database connection pool and spike memory usage.
+
+If you reject it with a 400 Bad Request, you force clients to write custom retry logic just to guess your ceiling.
+
+While building an e-commerce REST API recently, I chose the conventional defensiveness standard: limit clamping.
+
+Here is the contract:
+- Default page size: 20 records.
+- Permitted maximum: 100 records.
+- If a client requests `limit=5000`, the API clamps the limit to 100, returns HTTP 200, and specifies `{ "meta": { "limit": 100, "total": 400, "hasMore": true } }`.
+
+To guard the query further:
+1. Negative offsets return an honest 400 Bad Request instead of overflowing or defaulting silently.
+2. Requesting past the end of the collection (e.g. offset=1000 on a 400-item table) returns HTTP 200 with an empty array `[]` and `hasMore: false` (never a 404, because the query was valid).
+3. A deterministic tiebreaker (`ORDER BY createdAt DESC, id ASC`) stops items from hopping between pages during active writes.
+
+Paste this into your terminal right now to see the clamping in action against the live production server:
+curl -i "https://ecommerce-api-xidz.onrender.com/api/v1/products?limit=5000"
+
+Live API: https://ecommerce-api-xidz.onrender.com
+Live Catalog: https://ecommerce-consumer.onrender.com
+Code: https://github.com/olaflay/ecommerce-api
+
+How do you usually handle oversized pagination requests on your public endpoints?
+```
+
+---
+
+## Option 4: Short, Punchy & Direct (Under 60 Seconds Read)
 *Angle: Quick Project Showcase with Visuals*
 
 ```text
@@ -98,6 +136,9 @@ Instead of a basic CRUD project, I focused on edge-case resilience:
 • Production ready: Rate limiting with Retry-After headers, reverse-proxy trust, and payload size ceilings.
 
 Seeded with 400 products across 40 categories, 400 customers, and 800 orders to test real pagination, filtering, and sorting under realistic volume.
+
+Run this curl command right now to test the live API:
+curl -i "https://ecommerce-api-xidz.onrender.com/api/v1/products?limit=2&offset=0"
 
 Live Client: https://ecommerce-consumer.onrender.com
 Live API: https://ecommerce-api-xidz.onrender.com

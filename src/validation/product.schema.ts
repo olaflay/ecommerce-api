@@ -47,7 +47,11 @@ export function parseProductFilters(
     if (!/^\d+$/.test(rawMin)) {
       throw new BadRequestError("minPrice must be a non-negative integer");
     }
-    filters.minPrice = parseInt(rawMin, 10);
+    const parsedMin = parseInt(rawMin, 10);
+    if (parsedMin > 2147483647) {
+      throw new BadRequestError("minPrice exceeds maximum allowed integer value");
+    }
+    filters.minPrice = parsedMin;
   }
 
   // maxPrice
@@ -59,7 +63,11 @@ export function parseProductFilters(
     if (!/^\d+$/.test(rawMax)) {
       throw new BadRequestError("maxPrice must be a non-negative integer");
     }
-    filters.maxPrice = parseInt(rawMax, 10);
+    const parsedMax = parseInt(rawMax, 10);
+    if (parsedMax > 2147483647) {
+      throw new BadRequestError("maxPrice exceeds maximum allowed integer value");
+    }
+    filters.maxPrice = parsedMax;
   }
 
   // Inverted range check (PRD §9)
