@@ -13,10 +13,7 @@ A production-grade REST API modeling a complete e-commerce catalog and transacti
 - **Live Healthcheck**: [`https://ecommerce-api-xidz.onrender.com/healthz`](https://ecommerce-api-xidz.onrender.com/healthz)
 - **Live Consumer Client**: [`https://ecommerce-consumer.onrender.com`](https://ecommerce-consumer.onrender.com)
 - **GitHub Repository**: [`https://github.com/olaflay/ecommerce-api`](https://github.com/olaflay/ecommerce-api)
-- **Algorithmic Pseudocode**: [`PSEUDOCODE.md`](PSEUDOCODE.md)
-- **Background Worker Job**: [`src/jobs/expireStaleOrders.ts`](src/jobs/expireStaleOrders.ts)
-- **System Design & Modeling**: [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md)
-- **Code Review & Audit**: [`reviews/live-review-2026-09-16.md`](reviews/live-review-2026-09-16.md)
+- **Public Post**: [`POST.md`](POST.md)
 
 ---
 
@@ -537,18 +534,9 @@ Content-Type: application/json; charset=utf-8
 - Deterministic with `faker.seed(42)`.
 - Generates 40 categories, 400 products (including deliberate out-of-stock items), 400 customers, and 800 orders distributed across all 5 statuses.
 
-### 5. Autonomous Background Job: Expired Order Cleanup & Restock
-- Located at [`src/jobs/expireStaleOrders.ts`](src/jobs/expireStaleOrders.ts).
-- Automatically detects `pending` orders inactive beyond a configurable threshold (default: 30 minutes), acquires pessimistic row locks, restocks product catalog quantities, and transitions status to `cancelled`.
-- Executable on-demand via `npm run job:expire-orders`, as a continuous worker via `npm run worker`, or autonomously via GitHub Actions cron in [`.github/workflows/order-cleanup-cron.yml`](.github/workflows/order-cleanup-cron.yml).
-
-### 6. Formal Algorithmic Pseudocode
-- Located at [`PSEUDOCODE.md`](PSEUDOCODE.md).
-- Formally specifies all core flows: query filtering & clamping, row-locked order checkouts, finite state machine transitions, inventory restocking, and background worker logic.
-
 ---
 
-## 9. Submission Checklist
+## 9. Submission Checklist (Task 1)
 
 - [x] **Repository**:
   - [x] Runs from a fresh clone using only the README.
@@ -556,21 +544,15 @@ Content-Type: application/json; charset=utf-8
   - [x] `.env.example` present and documented.
   - [x] Incremental commit history across all development phases.
   - [x] Nothing outside the brief was built (no authentication, no admin panel).
-- [x] **Documentation & System Design**:
+- [x] **Documentation**:
   - [x] All 5 resources specified in Step 1 tables with types, requirements, and UUID v4 identifiers.
   - [x] Comprehensive architectural specification in [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md).
-  - [x] Algorithmic pseudocode in [`PSEUDOCODE.md`](PSEUDOCODE.md).
   - [x] "Design Decisions" section comprehensively explains resources, identifiers, offset vs cursor, envelopes, and money.
   - [x] All 4 defence questions answered in full.
   - [x] Every endpoint documented with query parameters, types, defaults, curl commands, and responses.
-- [x] **Background Processing**:
-  - [x] Autonomous stale order auto-cancellation & restock worker at [`src/jobs/expireStaleOrders.ts`](src/jobs/expireStaleOrders.ts).
-  - [x] Scheduled cron workflow at [`.github/workflows/order-cleanup-cron.yml`](.github/workflows/order-cleanup-cron.yml).
-- [x] **Code Review**:
-  - [x] Full deployment code review audit in [`reviews/live-review-2026-09-16.md`](reviews/live-review-2026-09-16.md).
 - [x] **Verification**:
-  - [x] Automated test suite passing with all test suites (`npm test`).
+  - [x] Automated test suite passing with 44/44 tests (`npm test`).
   - [x] Deployed live URL verified on Render.
   - [x] Consumer client verified connecting exclusively to the live public API.
 - [x] **Post**:
-  - [x] Ready-to-publish engineering post in [`evidence/LINKEDIN_POST.md`](evidence/LINKEDIN_POST.md) teaching system design tradeoffs with live URLs and pasteable curl commands.
+  - [x] Ready-to-publish engineering post in [`POST.md`](POST.md) teaching system design tradeoffs with live URLs and pasteable curl commands.

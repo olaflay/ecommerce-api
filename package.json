@@ -12,8 +12,6 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "seed": "tsx prisma/seed.ts",
-    "job:expire-orders": "tsx src/jobs/expireStaleOrders.ts",
-    "worker": "tsx src/jobs/expireStaleOrders.ts --worker",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
