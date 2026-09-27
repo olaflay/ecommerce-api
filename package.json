@@ -1,44 +1,23 @@
 {
-  "name": "bootcamp-ecommerce-api",
+  "name": "product-engineering-portfolio",
   "version": "1.0.0",
   "private": true,
-  "description": "E-Commerce Catalog & Ordering API - Bootcamp Task 1",
+  "description": "Product Engineering Suite - 5 Production Systems (Storefront API, Background Job Engine, Mobility Data Modeling, Code Review Audits, Algorithmic Pseudocode Lab)",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc",
-    "start": "node dist/server.js",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:generate": "prisma generate",
-    "seed": "tsx prisma/seed.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "dev:storefront": "npm --prefix storefront-api run dev",
+    "dev:jobs": "npm --prefix background-job-engine run dev:api",
+    "worker:jobs": "npm --prefix background-job-engine run worker",
+    "build:storefront": "npm --prefix storefront-api run build",
+    "test:storefront": "npm --prefix storefront-api test",
+    "test:jobs": "npm --prefix background-job-engine test",
+    "test": "npm run test:storefront && npm run test:jobs",
+    "typecheck": "npm --prefix storefront-api run typecheck && npm --prefix background-job-engine run typecheck"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.10.0",
-    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-async-errors": "^3.1.1",
-    "express-rate-limit": "^7.5.0",
-    "helmet": "^8.0.0",
-    "prisma": "^6.5.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3",
-    "zod": "^3.24.2"
-  },
-  "devDependencies": {
-    "@faker-js/faker": "^9.5.0",
-    "@types/supertest": "^6.0.2",
-    "supertest": "^7.0.0",
-    "vitest": "^3.0.0"
+    "typescript": "^5.7.3"
   }
 }

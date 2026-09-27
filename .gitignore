@@ -9,3 +9,11 @@ consumer/dist/
 consumer/node_modules/
 .playwright-mcp/
 reviews/
+storefront-api/.env
+storefront-api/dist/
+storefront-api/node_modules/
+storefront-api/consumer/dist/
+storefront-api/consumer/node_modules/
+background-job-engine/.env
+background-job-engine/dist/
+background-job-engine/node_modules/

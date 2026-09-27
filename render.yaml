@@ -5,6 +5,7 @@ services:
     runtime: node
     plan: free
     region: oregon
+    rootDir: storefront-api
     buildCommand: npm install --include=dev && npx prisma migrate deploy && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
@@ -28,7 +29,7 @@ services:
   - type: web
     name: ecommerce-consumer
     runtime: static
-    rootDir: consumer
+    rootDir: storefront-api/consumer
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     routes:
