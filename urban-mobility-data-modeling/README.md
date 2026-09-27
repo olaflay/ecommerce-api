@@ -8,11 +8,23 @@ A complete architecture, data model, and API design specification for **ApexRide
 
 | Artifact | Purpose & Core Content |
 |---|---|
-| [`REQUIREMENTS.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/REQUIREMENTS.md) | Product definition, user personas (Riders, Drivers, Dispatch Operators), and five core user actions. |
-| [`ENTITIES.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/ENTITIES.md) | Full entity specifications, field types, nullability, cardinalities, and Mermaid ER diagram. |
-| [`HARD_QUESTIONS.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/HARD_QUESTIONS.md) | In-depth analysis of the 7 hard questions: deliberate denormalization, integer minor units, state machines, soft deletes, UUIDs, constraints, and query indexes. |
-| [`API_CONTRACTS.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/API_CONTRACTS.md) | Complete REST API endpoint contracts, error envelopes, REST vs. GraphQL over-fetching analysis, and WebSockets vs. SSE real-time telemetry analysis. |
-| [`POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/POST.md) | Senior engineering publication on state machine integrity and unexpected forbidden transitions. |
+| [`REQUIREMENTS.md`](REQUIREMENTS.md) | Product definition, user personas (Riders, Drivers, Dispatch Operators), and five core user actions. |
+| [`ENTITIES.md`](ENTITIES.md) | Full entity specifications, field types, nullability, cardinalities, and Mermaid ER diagram. |
+| [`HARD_QUESTIONS.md`](HARD_QUESTIONS.md) | In-depth analysis of the 7 hard questions: deliberate denormalization, integer minor units, state machines, soft deletes, UUIDs, constraints, and query indexes. |
+| [`API_CONTRACTS.md`](API_CONTRACTS.md) | Complete REST API endpoint contracts, error envelopes, REST vs. GraphQL over-fetching analysis, and WebSockets vs. SSE real-time telemetry analysis. |
+| [`POST.md`](POST.md) | Senior engineering publication on state machine integrity and unexpected forbidden transitions. |
+
+---
+
+## Visual Evidence
+
+### Entity-Relationship (ER) Diagram
+
+![ApexRide ER Diagram](er_diagram.jpg)
+
+### Trip State Machine Diagram
+
+![ApexRide Trip State Machine](trip_state_machine.jpg)
 
 ---
 

@@ -6,13 +6,23 @@ A monorepo containing five production-grade engineering systems built for the **
 
 ## Master Architecture & Directory Index
 
-| Module Directory | Bootcamp Task | Domain & Core Architectural Focus | Public Technical Writeup | Status & Verification |
-|---|---|---|---|---|
-| [`storefront-api/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/storefront-api/README.md) | **Task 1** | **Consumable REST API & Consumer Client**<br>• Fully versioned REST API (`/api/v1/`)<br>• PostgreSQL `SELECT ... FOR UPDATE` inventory row locking<br>• Server-computed totals in integer minor units (kobo)<br>• Offset & limit clamping, custom error envelopes, IP rate limiter<br>• Minimalist React + Vite consumer client handling loading, empty, and error states | [`storefront-api/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/storefront-api/POST.md)<br>*Limit Clamping and Query Parameter Security* | **Live on Render**<br>• [Live API URL](https://ecommerce-api-xidz.onrender.com/api/v1/products)<br>• [Live Consumer URL](https://ecommerce-consumer.onrender.com)<br>• 44/44 tests passing |
-| [`background-job-engine/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/background-job-engine/README.md) | **Task 2** | **Resilient Asynchronous Job Engine & DLQ**<br>• PostgreSQL `FOR UPDATE SKIP LOCKED` for atomic job claiming<br>• Exponential backoff with randomized jitter<br>• Strict separation between `failed` (transient retry) vs. `dead` (quarantine DLQ)<br>• Stale job sweeper detecting crashed worker heartbeats<br>• HTML Dead-Letter management dashboard with manual retry capabilities | [`background-job-engine/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/background-job-engine/POST.md)<br>*Failed vs. Dead: The Architectural Distinction Most Queues Get Wrong* | **Empirically Proven**<br>• 5/5 Break-It attack suites passing<br>• Concurrency cap strictly held under 50-job burst<br>• Zero duplicate claims across concurrent workers |
-| [`urban-mobility-data-modeling/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/README.md) | **Task 3** | **High-Scale API Design & Data Modeling**<br>• Urban On-Demand Mobility platform ("ApexRide")<br>• Highly normalized schema with deliberate read-path denormalization<br>• Integer minor unit financial storage, strict trip state machine<br>• REST vs. GraphQL overfetching audit, WebSockets vs. SSE real-time spec | [`urban-mobility-data-modeling/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/POST.md)<br>*You Can't Cancel a Moving Car: Why State Machines Belong in Your DB* | **Verified on PostgreSQL**<br>• 8/8 empirical tests passing<br>• Partial unique indexes preventing multi-active trips<br>• `EXPLAIN ANALYZE` index verification (<0.25ms query plans) |
-| [`code-review-audits/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/code-review-audits/README.md) | **Task 4** | **Senior Engineering Code Review & Production Audits**<br>• 4-Tier Review Rubric (`[BLOCKING]`, `[SHOULD FIX]`, `[QUESTION]`, `[PRAISE]`)<br>• 3 peer PR reviews (TOCTOU webhook race, distributed rate limiter proxy fail, order cancellation restock)<br>• 1 authored PR with 3 peer reviews fully answered<br>• One-page engineering retrospective | [`code-review-audits/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/code-review-audits/POST.md)<br>*The Deadlock Hazard in Bulk Inventory Locking* | **Complete Review Suite**<br>• Rubric, given reviews, received reviews, retrospective & post fully documented |
-| [`algorithmic-pseudocode-lab/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/algorithmic-pseudocode-lab/README.md) | **Task 5** | **Algorithmic Pseudocoding & Mental Execution Lab**<br>• Strict standardized pseudocode format without syntactic shortcuts<br>• 9 Part A pseudocode specifications with hand-trace state tables<br>• Planted bug diagnosis (Voucher dilution order-of-operations bug)<br>• Part B manual implementation and 5 hand-trace benchmarks<br>• Part C AI implementation, difference table, 10-input comparison benchmark, and 5-minute explanation script | [`algorithmic-pseudocode-lab/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/algorithmic-pseudocode-lab/POST.md)<br>*The Spec is the Prompt: What Pseudocode Taught Me About Directing AI* | **100% Benchmark Agreement**<br>• 10/10 test inputs in perfect agreement across manual and AI<br>• Zero divergence in edge calculations |
+| Module Directory | Bootcamp Task | Domain & Core Architectural Focus |
+|---|---|---|
+| [`storefront-api/`](./storefront-api/) | **Task 1** | **Consumable REST API & Consumer Client** — Fully versioned REST API (`/api/v1/`), PostgreSQL `SELECT ... FOR UPDATE` inventory row locking, server-computed totals in integer minor units (kobo), offset & limit clamping, custom error envelopes, IP rate limiter, React + Vite consumer client |
+| [`background-job-engine/`](./background-job-engine/) | **Task 2** | **Resilient Asynchronous Job Engine & DLQ** — PostgreSQL `FOR UPDATE SKIP LOCKED` atomic job claiming, exponential backoff with randomized jitter, strict `failed` vs. `dead` separation, stale job sweeper, HTML Dead-Letter management dashboard |
+| [`urban-mobility-data-modeling/`](./urban-mobility-data-modeling/) | **Task 3** | **High-Scale API Design & Data Modeling** — Urban On-Demand Mobility platform ("ApexRide"), highly normalized schema with deliberate read-path denormalization, integer minor unit financial storage, strict trip state machine, REST vs. GraphQL overfetching audit, WebSockets vs. SSE real-time spec |
+| [`code-review-audits/`](./code-review-audits/) | **Task 4** | **Senior Engineering Code Review & Production Audits** — 4-Tier Review Rubric (`[BLOCKING]`, `[SHOULD FIX]`, `[QUESTION]`, `[PRAISE]`), peer PR reviews, authored PR with peer reviews fully answered, engineering retrospective |
+| [`algorithmic-pseudocode-lab/`](./algorithmic-pseudocode-lab/) | **Task 5** | **Algorithmic Pseudocoding & Mental Execution Lab** — Strict standardized pseudocode format, Part A pseudocode specifications with hand-trace state tables, planted bug diagnosis, Part B manual implementation, Part C AI implementation with difference table and 10-input comparison benchmark |
+
+---
+
+## Live Deployments
+
+| Service | URL | Status |
+|---|---|---|
+| **Storefront API** | https://ecommerce-api-xidz.onrender.com/api/v1/products | ✅ Live |
+| **Health Check** | https://ecommerce-api-xidz.onrender.com/healthz | ✅ Green |
+| **Consumer App** | https://ecommerce-consumer.onrender.com | 🔄 Render Static Site |
 
 ---
 
@@ -56,8 +66,22 @@ npm run worker:jobs
 
 | Deliverable Item | Submission Link / Artifact Location |
 |---|---|
-| **Task 1: Consumable API** | **Live API:** `https://ecommerce-api-xidz.onrender.com/api/v1/products`<br>**Live Consumer:** `https://ecommerce-consumer.onrender.com`<br>**GitHub Directory:** [`storefront-api/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/storefront-api/)<br>**Public Post:** [`storefront-api/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/storefront-api/POST.md) |
-| **Task 2: Background Jobs** | **GitHub Directory:** [`background-job-engine/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/background-job-engine/)<br>**Public Post:** [`background-job-engine/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/background-job-engine/POST.md) |
-| **Task 3: API & Data Modeling** | **GitHub Directory:** [`urban-mobility-data-modeling/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/)<br>**Public Post:** [`urban-mobility-data-modeling/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/urban-mobility-data-modeling/POST.md) |
-| **Task 4: Code Review** | **GitHub Directory:** [`code-review-audits/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/code-review-audits/)<br>**Retrospective:** [`code-review-audits/RETROSPECTIVE.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/code-review-audits/RETROSPECTIVE.md)<br>**Public Post:** [`code-review-audits/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/code-review-audits/POST.md) |
-| **Task 5: Pseudocoding** | **GitHub Directory:** [`algorithmic-pseudocode-lab/`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/algorithmic-pseudocode-lab/)<br>**Explanation Script:** [`algorithmic-pseudocode-lab/part-c/EXPLANATION_SCRIPT.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/algorithmic-pseudocode-lab/part-c/EXPLANATION_SCRIPT.md)<br>**Public Post:** [`algorithmic-pseudocode-lab/POST.md`](file:///c:/Users/ADMIN/Documents/ecommerce%20api/algorithmic-pseudocode-lab/POST.md) |
+| **Task 1: Consumable API** | **Live API:** `https://ecommerce-api-xidz.onrender.com/api/v1/products` — **Live Consumer:** `https://ecommerce-consumer.onrender.com` — **GitHub:** [`storefront-api/`](./storefront-api/) — **Post:** [`storefront-api/POST.md`](./storefront-api/POST.md) |
+| **Task 2: Background Jobs** | **GitHub:** [`background-job-engine/`](./background-job-engine/) — **Post:** [`background-job-engine/POST.md`](./background-job-engine/POST.md) |
+| **Task 3: API & Data Modeling** | **GitHub:** [`urban-mobility-data-modeling/`](./urban-mobility-data-modeling/) — **Post:** [`urban-mobility-data-modeling/POST.md`](./urban-mobility-data-modeling/POST.md) |
+| **Task 4: Code Review** | **GitHub:** [`code-review-audits/`](./code-review-audits/) — **Retrospective:** [`code-review-audits/RETROSPECTIVE.md`](./code-review-audits/RETROSPECTIVE.md) — **Post:** [`code-review-audits/POST.md`](./code-review-audits/POST.md) |
+| **Task 5: Pseudocoding** | **GitHub:** [`algorithmic-pseudocode-lab/`](./algorithmic-pseudocode-lab/) — **Explanation Script:** [`algorithmic-pseudocode-lab/part-c/EXPLANATION_SCRIPT.md`](./algorithmic-pseudocode-lab/part-c/EXPLANATION_SCRIPT.md) — **Post:** [`algorithmic-pseudocode-lab/POST.md`](./algorithmic-pseudocode-lab/POST.md) |
+
+---
+
+## Public Technical Posts
+
+Each task includes a publication-quality technical writeup:
+
+| Task | Post Title | Key Insight |
+|---|---|---|
+| Task 1 | [Limit Clamping and Query Parameter Security](./storefront-api/POST.md) | What happens when someone requests 5,000 records from your API |
+| Task 2 | [Failed vs. Dead: The Distinction Most Queues Get Wrong](./background-job-engine/POST.md) | Why conflating retry-eligible and exhausted jobs is a production incident waiting to happen |
+| Task 3 | [You Can't Cancel a Moving Car](./urban-mobility-data-modeling/POST.md) | Why state machines belong in your database, not your application code |
+| Task 4 | [The Deadlock Hazard in Bulk Inventory Locking](./code-review-audits/POST.md) | The best code review comment I received and what it caught |
+| Task 5 | [The Spec is the Prompt](./algorithmic-pseudocode-lab/POST.md) | What pseudocode taught me about directing AI and verifying what it produces |
