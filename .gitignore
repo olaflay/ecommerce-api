@@ -17,3 +17,8 @@ storefront-api/consumer/node_modules/
 background-job-engine/.env
 background-job-engine/dist/
 background-job-engine/node_modules/
+urban-mobility-data-modeling/.env
+urban-mobility-data-modeling/dist/
+urban-mobility-data-modeling/node_modules/
+algorithmic-pseudocode-lab/dist/
+algorithmic-pseudocode-lab/node_modules/

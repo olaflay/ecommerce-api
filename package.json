@@ -2,17 +2,17 @@
   "name": "product-engineering-portfolio",
   "version": "1.0.0",
   "private": true,
-  "description": "Product Engineering Suite - 5 Production Systems (Storefront API, Background Job Engine, Mobility Data Modeling, Code Review Audits, Algorithmic Pseudocode Lab)",
+  "description": "Product Engineering Portfolio - 5 Core Production Systems (Storefront API, Job Engine, Mobility Data Model, Code Review Audits, Algorithmic Pseudocode Lab)",
   "type": "module",
   "scripts": {
-    "dev:storefront": "npm --prefix storefront-api run dev",
-    "dev:jobs": "npm --prefix background-job-engine run dev:api",
-    "worker:jobs": "npm --prefix background-job-engine run worker",
-    "build:storefront": "npm --prefix storefront-api run build",
     "test:storefront": "npm --prefix storefront-api test",
     "test:jobs": "npm --prefix background-job-engine test",
-    "test": "npm run test:storefront && npm run test:jobs",
-    "typecheck": "npm --prefix storefront-api run typecheck && npm --prefix background-job-engine run typecheck"
+    "test:mobility": "npm --prefix urban-mobility-data-modeling test",
+    "test:pseudocode": "npm --prefix algorithmic-pseudocode-lab test",
+    "test": "npm run test:storefront && npm run test:jobs && npm run test:mobility && npm run test:pseudocode",
+    "dev:storefront": "npm --prefix storefront-api run dev",
+    "dev:jobs": "npm --prefix background-job-engine run dev:api",
+    "worker:jobs": "npm --prefix background-job-engine run worker"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

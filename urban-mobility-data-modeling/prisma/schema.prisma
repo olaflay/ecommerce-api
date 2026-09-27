@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DriverStatus {
+  offline
+  available
+  busy
+  suspended
+}
+
+enum VehicleTier {
+  standard
+  comfort
+  xl
+}
+
+enum TripStatus {
+  requested
+  driver_assigned
+  driver_arriving
+  in_progress
+  completed
+  cancelled_by_rider
+  cancelled_by_driver
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+model Rider {
+  id          String    @id @default(uuid()) @db.Uuid
+  fullName    String    @db.VarChar(100)
+  email       String    @unique @db.VarChar(255)
+  phoneNumber String    @unique @db.VarChar(20)
+  rating      Decimal   @default(5.00) @db.Decimal(3, 2)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  trips       Trip[]
+  reviews     Review[]
+
+  @@index([email])
+  @@index([phoneNumber])
+}
+
+model Driver {
+  id            String       @id @default(uuid()) @db.Uuid
+  fullName      String       @db.VarChar(100)
+  email         String       @unique @db.VarChar(255)
+  phoneNumber   String       @unique @db.VarChar(20)
+  licenseNumber String       @unique @db.VarChar(50)
+  status        DriverStatus @default(offline)
+  rating        Decimal      @default(5.00) @db.Decimal(3, 2)
+  totalTrips    Int          @default(0)
+  currentLat    Float?
+  currentLng    Float?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+
+  vehicles      Vehicle[]
+  trips         Trip[]
+  reviews       Review[]
+
+  @@index([status, currentLat, currentLng])
+  @@index([email])
+}
+
+model Vehicle {
+  id           String      @id @default(uuid()) @db.Uuid
+  driverId     String      @db.Uuid
+  driver       Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  make         String      @db.VarChar(50)
+  model        String      @db.VarChar(50)
+  year         Int
+  licensePlate String      @unique @db.VarChar(20)
+  tier         VehicleTier @default(standard)
+  color        String      @db.VarChar(30)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  trips        Trip[]
+
+  @@index([driverId, isActive])
+  @@index([licensePlate])
+}
+
+model Trip {
+  id                   String     @id @default(uuid()) @db.Uuid
+  riderId              String     @db.Uuid
+  rider                Rider      @relation(fields: [riderId], references: [id], onDelete: Restrict)
+  driverId             String     @db.Uuid
+  driver               Driver     @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  vehicleId            String?    @db.Uuid
+  vehicle              Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  status               TripStatus @default(requested)
+  pickupLat            Float
+  pickupLng            Float
+  pickupAddress        String     @db.Text
+  dropoffLat           Float
+  dropoffLng           Float
+  dropoffAddress       String     @db.Text
+  distanceMeters       Int?
+  durationSeconds      Int?
+  driverNameSnapshot   String?    @db.VarChar(100)
+  driverPhoneSnapshot  String?    @db.VarChar(20)
+  vehiclePlateSnapshot String?    @db.VarChar(20)
+  vehicleModelSnapshot String?    @db.VarChar(100)
+  requestedAt          DateTime   @default(now())
+  acceptedAt           DateTime?
+  startedAt            DateTime?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+  cancellationReason   String?    @db.Text
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  receipt              FareReceipt?
+  review               Review?
+
+  @@index([riderId, status])
+  @@index([driverId, status])
+  @@index([status, requestedAt])
+  @@index([riderId, completedAt])
+}
+
+model FareReceipt {
+  id                  String        @id @default(uuid()) @db.Uuid
+  tripId              String        @unique @db.Uuid
+  trip                Trip          @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  baseFareMinor       Int
+  distanceFareMinor   Int
+  timeFareMinor       Int
+  surgeMultiplier     Decimal       @default(1.00) @db.Decimal(3, 2)
+  subtotalMinor       Int
+  discountMinor       Int           @default(0)
+  totalFareMinor      Int
+  platformFeeMinor    Int
+  driverEarningsMinor Int
+  currency            String        @default("NGN") @db.VarChar(3)
+  paymentStatus       PaymentStatus @default(pending)
+  paymentMethod       String?       @db.VarChar(50)
+  paymentReference    String?       @db.VarChar(100)
+  createdAt           DateTime      @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @unique @db.Uuid
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  riderId   String   @db.Uuid
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Restrict)
+  driverId  String   @db.Uuid
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  rating    Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([driverId, rating])
+  @@index([riderId])
+}
