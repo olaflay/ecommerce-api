@@ -1,0 +1,54 @@
+﻿COMMAND : npx tsx evidence/probe-api-smoke.ts
+RUN AT  : 2026-09-28T14:49:41.9442766Z
+PURPOSE : prove the API boots for real and serves the documented contract over HTTP.
+          Starts src/api/server.ts as a child process on port 4010, issues real
+          requests, then shuts it down. Uses the isolated task2_test schema so the
+          shared public.Job is never written to. CORS rows use plain node:http
+          because Node's fetch() strips Origin / Access-Control-Request-Method.
+
+Target schema: task2_test (isolated; public.Job is not touched)
+API contract over real HTTP:
+  GET /healthz
+    -> HTTP 200 {"status":"ok","timestamp":"2026-09-28T14:49:54.355Z","uptimeSeconds":2}
+  GET /  (dashboard)
+    -> HTTP 200 7315 bytes of text/HTML
+  GET /api/metrics
+    -> HTTP 200 {"data":{"pending":0,"processing":0,"succeeded":0,"failed":0,"dead":0,"total":0}}
+  POST /api/jobs (valid)
+    -> HTTP 202 {"data":{"id":"6ffe84f8-5442-48d6-8c11-9cbc5824785f","type":"SLOW_TEST_JOB","status":"pending","idempotencyKey":"smoke-1790606994348-1","isDuplicate":false,"message":"Job accepted for background processing"}}
+  POST /api/jobs (same idempotency key)
+    -> HTTP 202 {"data":{"id":"6ffe84f8-5442-48d6-8c11-9cbc5824785f","type":"SLOW_TEST_JOB","status":"pending","idempotencyKey":"smoke-1790606994348-1","isDuplicate":true,"message":"Existing job returned with matching idempotency key"}}
+    same id returned: true (6ffe84f8-5442-48d6-8c11-9cbc5824785f vs 6ffe84f8-5442-48d6-8c11-9cbc5824785f)
+  POST /api/jobs (unknown type)
+    -> HTTP 422 {"error":{"code":"VALIDATION_ERROR","message":"Invalid enqueue parameters","details":{"type":["type must be one of: INVOICE_REPORT_GENERATION, THIRD_PARTY_WEBHOOK_DISPATCH, TEST_FAILING_JOB, SLOW_TEST_JOB"]}}}
+  POST /api/jobs (malformed id path)
+    -> HTTP 400 {"error":{"code":"BAD_REQUEST","message":"\"id\" must be a valid UUID"}}
+  GET /api/jobs/:id (valid)
+    -> HTTP 200 {"data":{"id":"6ffe84f8-5442-48d6-8c11-9cbc5824785f","type":"SLOW_TEST_JOB","payload":{"sleepMs":250},"status":"pending","attempts":0,"maxAttempts":3,"lastError":null,"runAt":"2026-09-28T14:49:57.903Z","startedAt":null,"lastHeartbeatAt":null,"finishedAt":null,"idempotencyKey":"smoke-1790606994348-1","createdAt":"2026-09-28T14:49:57.907Z","updatedAt":"2026-09-28T14:49:57.907Z","output":null}}
+  GET /api/dead-letter
+    -> HTTP 200 {"data":[],"meta":{"count":0,"total":0,"limit":5,"offset":0,"hasMore":false}}
+  GET /nope (unknown route)
+    -> HTTP 404 {"error":{"code":"NOT_FOUND","message":"Route not found"}}
+  GET /healthz with disallowed Origin (https://evil.example)
+    -> HTTP 200 access-control-allow-origin=<absent>
+  GET /healthz with allowed Origin (http://localhost:5173)
+    -> HTTP 200 access-control-allow-origin=http://localhost:5173
+  OPTIONS preflight, disallowed Origin (with ACRM: POST)
+    -> HTTP 204 access-control-allow-origin=<absent>
+  OPTIONS preflight, allowed Origin (with ACRM: POST)
+    -> HTTP 204 access-control-allow-origin=http://localhost:5173
+
+Server log:
+[Task 2 API] Listening on port 4010 (development)
+[Task 2 Dashboard] http://localhost:4010
+prisma:error 
+Invalid `prisma.job.create()` invocation in
+C:\Users\ADMIN\Documents\ecommerce api\task-2-background-jobs\src\queue\index.ts:91:37
+
+  88  */
+  89 export async function enqueueJob(options: EnqueueOptions): Promise<EnqueueResult> {
+  90   try {
+ΓåÆ 91     const newJob = await prisma.job.create(
+Unique constraint failed on the fields: (`idempotencyKey`)
+
+EXIT CODE: 0

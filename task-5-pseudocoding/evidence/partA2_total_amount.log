@@ -1,0 +1,118 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part A2 server-side total computation
+Script:      evidence/harness/partA2_total_amount.ts
+Captured:    2026-09-28T15:44:38.939Z
+Node:        v24.16.0
+Duration:    28.9s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+PART A2 EVIDENCE: server-side total computation (order.service.ts:74-92)
+===============================================================================
+Real code under test: task-1-consumable-api/src/services/order.service.ts :: OrderService.createOrder (totalAmount region)
+Executed at:          2026-09-28T15:44:11.170Z
+Node:                 v24.16.0
+===============================================================================
+
+  NOTE  product A: {"price":200000,"stock":50}
+  NOTE  product B: {"price":100000,"stock":50}
+  NOTE  product OOS: {"price":50000,"stock":0}
+
+--- Input 1: A x2 + B x1 ---
+prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."email", "public"."Customer"."phone", "public"."Customer"."createdAt", "public"."Customer"."updatedAt" FROM "public"."Customer" WHERE ("public"."Customer"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query BEGIN
+prisma:query SELECT id, name, price, "stockQuantity" FROM "Product" WHERE id = ANY($1::uuid[]) FOR UPDATE
+prisma:query UPDATE "public"."Product" SET "stockQuantity" = ("public"."Product"."stockQuantity" - $1), "updatedAt" = $2 WHERE ("public"."Product"."id" = $3 AND 1=1) RETURNING "public"."Product"."id", "public"."Product"."categoryId", "public"."Product"."name", "public"."Product"."description", "public"."Product"."price", "public"."Product"."currency", "public"."Product"."stockQuantity", "public"."Product"."createdAt", "public"."Product"."updatedAt"
+prisma:query UPDATE "public"."Product" SET "stockQuantity" = ("public"."Product"."stockQuantity" - $1), "updatedAt" = $2 WHERE ("public"."Product"."id" = $3 AND 1=1) RETURNING "public"."Product"."id", "public"."Product"."categoryId", "public"."Product"."name", "public"."Product"."description", "public"."Product"."price", "public"."Product"."currency", "public"."Product"."stockQuantity", "public"."Product"."createdAt", "public"."Product"."updatedAt"
+prisma:query INSERT INTO "public"."Order" ("id","customerId","status","totalAmount","currency","createdAt","updatedAt") VALUES ($1,$2,CAST($3::text AS "public"."OrderStatus"),$4,$5,$6,$7) RETURNING "public"."Order"."id"
+prisma:query INSERT INTO "public"."OrderItem" ("id","orderId","productId","quantity","unitPrice","createdAt") VALUES ($1,$2,$3,$4,$5,$6), ($7,$8,$9,$10,$11,$12)
+prisma:query SELECT "public"."Order"."id", "public"."Order"."customerId", "public"."Order"."status"::text, "public"."Order"."totalAmount", "public"."Order"."currency", "public"."Order"."createdAt", "public"."Order"."updatedAt" FROM "public"."Order" WHERE "public"."Order"."id" = $1 LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."email" FROM "public"."Customer" WHERE "public"."Customer"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."OrderItem"."id", "public"."OrderItem"."orderId", "public"."OrderItem"."productId", "public"."OrderItem"."quantity", "public"."OrderItem"."unitPrice", "public"."OrderItem"."createdAt" FROM "public"."OrderItem" WHERE "public"."OrderItem"."orderId" IN ($1) OFFSET $2
+prisma:query SELECT "public"."Product"."id", "public"."Product"."name", "public"."Product"."price" FROM "public"."Product" WHERE "public"."Product"."id" IN ($1,$2) OFFSET $3
+prisma:query COMMIT
+  totalAmount returned: 500000
+  lines returned:       [{"productId":"00858a4c-9e17-4fc8-9613-2d940342f963","quantity":2,"unitPrice":200000},{"productId":"3902f997-4877-46c3-9ea3-2c3b93388469","quantity":1,"unitPrice":100000}]
+[PASS] Input 1 HTTP status
+       expected: 201
+       actual:   201
+[PASS] Input 1 totalAmount = 200000*2 + 100000*1
+       expected: 500000
+       actual:   500000
+[PASS] Input 1 line count
+       expected: 2
+       actual:   2
+[PASS] Input 1 every unitPrice snapshot equals its catalog price
+       expected: true
+       actual:   true
+
+--- Input 2: out-of-stock product, quantity 1 ---
+prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."email", "public"."Customer"."phone", "public"."Customer"."createdAt", "public"."Customer"."updatedAt" FROM "public"."Customer" WHERE ("public"."Customer"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query BEGIN
+prisma:query SELECT id, name, price, "stockQuantity" FROM "Product" WHERE id = ANY($1::uuid[]) FOR UPDATE
+prisma:query ROLLBACK
+  HTTP status:   409
+  response body: {"error":{"code":"CONFLICT","message":"Insufficient stock for product \"pseudocode-lab-OOS\". Requested: 1, Available: 0"}}
+[PASS] Input 2 HTTP status
+       expected: 409
+       actual:   409
+[PASS] Input 2 error code
+       expected: "CONFLICT"
+       actual:   "CONFLICT"
+[PASS] Input 2 no order row created
+       expected: 1
+       actual:   1
+
+--- Input 3: A x2 then A x3 (duplicate productId merge) ---
+prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."email", "public"."Customer"."phone", "public"."Customer"."createdAt", "public"."Customer"."updatedAt" FROM "public"."Customer" WHERE ("public"."Customer"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query BEGIN
+prisma:query SELECT id, name, price, "stockQuantity" FROM "Product" WHERE id = ANY($1::uuid[]) FOR UPDATE
+prisma:query UPDATE "public"."Product" SET "stockQuantity" = ("public"."Product"."stockQuantity" - $1), "updatedAt" = $2 WHERE ("public"."Product"."id" = $3 AND 1=1) RETURNING "public"."Product"."id", "public"."Product"."categoryId", "public"."Product"."name", "public"."Product"."description", "public"."Product"."price", "public"."Product"."currency", "public"."Product"."stockQuantity", "public"."Product"."createdAt", "public"."Product"."updatedAt"
+prisma:query INSERT INTO "public"."Order" ("id","customerId","status","totalAmount","currency","createdAt","updatedAt") VALUES ($1,$2,CAST($3::text AS "public"."OrderStatus"),$4,$5,$6,$7) RETURNING "public"."Order"."id"
+prisma:query INSERT INTO "public"."OrderItem" ("id","orderId","productId","quantity","unitPrice","createdAt") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "public"."OrderItem"."id"
+prisma:query SELECT "public"."Order"."id", "public"."Order"."customerId", "public"."Order"."status"::text, "public"."Order"."totalAmount", "public"."Order"."currency", "public"."Order"."createdAt", "public"."Order"."updatedAt" FROM "public"."Order" WHERE "public"."Order"."id" = $1 LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Customer"."id", "public"."Customer"."name", "public"."Customer"."email" FROM "public"."Customer" WHERE "public"."Customer"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."OrderItem"."id", "public"."OrderItem"."orderId", "public"."OrderItem"."productId", "public"."OrderItem"."quantity", "public"."OrderItem"."unitPrice", "public"."OrderItem"."createdAt" FROM "public"."OrderItem" WHERE "public"."OrderItem"."orderId" IN ($1) OFFSET $2
+prisma:query SELECT "public"."Product"."id", "public"."Product"."name", "public"."Product"."price" FROM "public"."Product" WHERE "public"."Product"."id" IN ($1) OFFSET $2
+prisma:query COMMIT
+  totalAmount returned: 1000000
+[PASS] Input 3 HTTP status
+       expected: 201
+       actual:   201
+[PASS] Input 3 merged into a single line
+       expected: 1
+       actual:   1
+[PASS] Input 3 merged quantity is 5
+       expected: 5
+       actual:   5
+[PASS] Input 3 totalAmount = 200000 * 5
+       expected: 1000000
+       actual:   1000000
+
+--- Arithmetic contract asserted by the pseudocode ---
+[PASS] totalAmount stored as an integer column
+       expected: true
+       actual:   true
+[PASS] totalAmount value
+       expected: 1000000
+       actual:   1000000
+[PASS] currency column written as NGN
+       expected: "NGN"
+       actual:   "NGN"
+  NOTE  No rounding, no tax, no discount: order.service.ts computes totalAmount purely as the running sum of price * quantity
+
+--- Cleanup (fixtures only; seeded rows untouched) ---
+  removed harness category, products, customer and their orders
+
+===============================================================================
+partA2 total computation: 14/14 assertions passed.
+===============================================================================
+RESULT: PASS — exiting with code 0
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

@@ -1,0 +1,29 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part B hand traces vs manual execution
+Script:      part-b/test_traces.ts
+Captured:    2026-09-28T15:43:30.209Z
+Node:        v24.16.0
+Duration:    0.6s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+PART B2: HAND-TRACE VS. MANUAL IMPLEMENTATION EXECUTION BENCHMARKS
+===============================================================================
+
+[Trace 1] Input 1: Standard Daytime Bike (5km, 1M subtotal, bike, off-peak): PASS (Observed: 125000 kobo, Expected: 125000 kobo)
+[Trace 2] Input 2: Free Delivery Threshold Met (8km, 3.5M subtotal, bike, off-peak): PASS (Observed: 0 kobo, Expected: 0 kobo)
+[Trace 3] Input 3: Free Delivery Disqualified by Distance (12km, 4M subtotal, bike, off-peak): PASS (Observed: 230000 kobo, Expected: 230000 kobo)
+[Trace 4] Input 4: Peak Hour Heavy Van (10km, 500k subtotal, van, peak): PASS (Observed: 500000 kobo, Expected: 500000 kobo)
+[Trace 5] Input 5: Invalid Negative Distance (-4km): PASS (Threw expected error)
+
+5/5 hand traces match manual execution exactly: true
+===============================================================================
+RESULT: PASS — exiting with code 0
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

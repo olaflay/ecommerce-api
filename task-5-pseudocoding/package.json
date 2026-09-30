@@ -1,0 +1,19 @@
+{
+  "name": "algorithmic-pseudocode-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Task 5: Algorithmic Pseudocode and Mental Execution Lab",
+  "type": "module",
+  "scripts": {
+    "test:traces": "tsx part-b/test_traces.ts",
+    "test:compare": "tsx part-c/compare_implementations.ts",
+    "test:probe": "tsx probe_divergence.ts",
+    "test:evidence": "tsx evidence/harness/run_all_evidence.ts",
+    "test": "npm run test:traces && npm run test:compare && npm run test:probe",
+    "evidence": "tsx evidence/harness/run_all_evidence.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

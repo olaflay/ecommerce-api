@@ -1,0 +1,92 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part A3 voucher-dilution bug
+Script:      evidence/harness/partA3_coupon_bug.ts
+Captured:    2026-09-28T15:44:57.187Z
+Node:        v24.16.0
+Duration:    1.0s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+PART A3 EVIDENCE: planted voucher-dilution bug — both implementations executed
+===============================================================================
+Real code under test: part-a/07_bugged_coupon_calculator_actual.md and part-a/08_bugged_coupon_calculator_intended.md
+Executed at:          2026-09-28T15:44:57.091Z
+Node:                 v24.16.0
+===============================================================================
+
+--- The worked example from part-a/09 section 3, executed ---
+  inputs: subtotalKobo=100000  percentageDiscount=20  fixedVoucherKobo=50000
+  BUGGED  afterVoucher        = 100000 - 50000 = 50000
+  BUGGED  finalTotal          = 50000 * 0.8 = 40000
+  BUGGED  returned            = 40000 kobo (₦400)
+  FIXED   percentageDeduction = 100000 * 0.2 = 20000
+  FIXED   discountedSubtotal  = 100000 - 20000 = 80000
+  FIXED   remainingTotal      = 80000 - 50000 = 30000
+  FIXED   returned            = 30000 kobo (₦300)
+[PASS] bugged result
+       expected: 40000
+       actual:   40000
+[PASS] fixed result
+       expected: 30000
+       actual:   30000
+[PASS] customer lost 10000 kobo of voucher face value
+       expected: 10000
+       actual:   10000
+  effective total discount, bugged = 60000 kobo
+  effective total discount, fixed  = 70000 kobo
+[PASS] bugged effective discount
+       expected: 60000
+       actual:   60000
+[PASS] fixed effective discount
+       expected: 70000
+       actual:   70000
+
+--- Voucher dilution across a sweep of voucher face values ---
+  subtotal=100000 kobo, 20% off; voucher face value vs value actually delivered
+  voucher |  buggy fee |  fixed fee |  face value lost by the customer
+    10000 |      72000 |      70000 |   2000
+    20000 |      64000 |      60000 |   4000
+    30000 |      56000 |      50000 |   6000
+    50000 |      40000 |      30000 |  10000
+    80000 |      16000 |          0 |  16000
+   100000 |          0 |          0 |  20000
+   150000 |          0 |          0 |  70000
+[PASS] 500 NGN voucher delivers only 400 NGN of face value under the bug
+       expected: 40000
+       actual:   40000
+
+--- The non-negative floor masks the bug at extreme voucher values ---
+  voucher=  80001 -> buggy=  15999 fixed=      0
+  voucher= 100001 -> buggy=      0 fixed=      0
+  voucher= 200000 -> buggy=      0 fixed=      0
+[PASS] for voucher > subtotal the floor clamps both to 0, so the two agree and the bug hides
+       expected: [0,0]
+       actual:   [0,0]
+
+--- Precondition enforcement declared in FAILS WHEN, versus what the code does ---
+  percentageDiscount = 150 (declared FAILS WHEN): threw=false result=0
+  percentageDiscount = -10 (declared FAILS WHEN): threw=false result=50000
+  fixedVoucherKobo = -50_000 (declared FAILS WHEN): threw=false result=80000
+[PASS] out-of-range discount clamps to 100% and floors the total at 0
+       expected: 0
+       actual:   0
+[PASS] negative discount clamps to 0%, so only the voucher applies
+       expected: 50000
+       actual:   50000
+[PASS] negative voucher clamps to 0, so only the 20% applies
+       expected: 80000
+       actual:   80000
+  NOTE  Resolution applied to part-a/08 and part-a/09: FAILS WHEN no longer declares conditions the code does not enforce; the clamp behaviour is now stated as an explicit step instead.
+
+===============================================================================
+partA3 coupon dilution bug: 10/10 assertions passed.
+===============================================================================
+RESULT: PASS — exiting with code 0
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

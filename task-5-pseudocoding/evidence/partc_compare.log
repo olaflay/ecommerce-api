@@ -1,0 +1,77 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part C 10-input comparative suite
+Script:      part-c/compare_implementations.ts
+Captured:    2026-09-28T15:43:30.834Z
+Node:        v24.16.0
+Duration:    0.6s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+PART C3: MANUAL VS. AI IMPLEMENTATION 10-INPUT COMPARATIVE BENCHMARK
+===============================================================================
+
+[Test 1] Input 1: Standard Daytime Bike (5km, 1M subtotal, bike, off-peak)
+   Manual Fee: 125000 kobo (Free: false)
+   AI Fee:     125000 kobo (Free: false)
+   Agreement:  PERFECT MATCH
+
+[Test 2] Input 2: Free Delivery Threshold Met (8km, 3.5M subtotal, bike, off-peak)
+   Manual Fee: 0 kobo (Free: true)
+   AI Fee:     0 kobo (Free: true)
+   Agreement:  PERFECT MATCH
+
+[Test 3] Input 3: Free Delivery Disqualified by Distance (12km, 4M subtotal, bike, off-peak)
+   Manual Fee: 230000 kobo (Free: false)
+   AI Fee:     230000 kobo (Free: false)
+   Agreement:  PERFECT MATCH
+
+[Test 4] Input 4: Peak Hour Heavy Van (10km, 500k subtotal, van, peak)
+   Manual Fee: 500000 kobo (Free: false)
+   AI Fee:     500000 kobo (Free: false)
+   Agreement:  PERFECT MATCH
+
+[Test 5] Input 5: Invalid Negative Distance (-4km)
+   Manual Threw: "Invalid distance (must be non-negative number)"
+   AI Threw:     "Invalid distance (must be non-negative number)"
+   Agreement:    PERFECT MATCH
+
+[Test 6] Input 6: Exact Free Delivery Lower Bound (Exactly 10km, 3M subtotal)
+   Manual Fee: 0 kobo (Free: true)
+   AI Fee:     0 kobo (Free: true)
+   Agreement:  PERFECT MATCH
+
+[Test 7] Input 7: Distance Boundary Breached by 100m (10.1km, 3M subtotal)
+   Manual Fee: 201500 kobo (Free: false)
+   AI Fee:     201500 kobo (Free: false)
+   Agreement:  PERFECT MATCH
+
+[Test 8] Input 8: Zero Distance Pickup at Hub (0.0km, 500k subtotal, bike, off-peak)
+   Manual Fee: 50000 kobo (Free: false)
+   AI Fee:     50000 kobo (Free: false)
+   Agreement:  PERFECT MATCH
+
+[Test 9] Input 9: Car Delivery with Fractional Distance and Peak Surge (7.3km, 800k, car, peak)
+   Manual Fee: 279125 kobo (Free: false)
+   AI Fee:     279125 kobo (Free: false)
+   Agreement:  PERFECT MATCH
+
+[Test 10] Input 10: Invalid Vehicle Type ('drone')
+   Manual Threw: "Unsupported vehicle type"
+   AI Threw:     "Unsupported vehicle type"
+   Agreement:    PERFECT MATCH
+
+===============================================================================
+Final Result: 10/10 test inputs in agreement across Manual and AI: true
+===============================================================================
+RESULT: 100% AGREEMENT ON THIS 10-INPUT SUITE — exiting with code 0
+NOTE: this suite covers 10 inputs only. It is NOT proof of general equivalence.
+      See part-c/DIFFERENCE_TABLE.md section 4 and probe_divergence.ts, which found a
+      real divergence on Infinity inputs while the manual implementation was buggy.
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

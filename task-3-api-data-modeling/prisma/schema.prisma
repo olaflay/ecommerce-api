@@ -1,0 +1,236 @@
+// =============================================================================
+// APEXRIDE — PARTIAL PRISMA VIEW. NOT THE SOURCE OF TRUTH.
+//
+// This file exists so `prisma generate` can emit a typed client for this
+// project. It is deliberately INCOMPLETE: the Prisma schema DSL cannot express
+// any of the following, and every one of them carries a load-bearing guarantee
+// described in HARD_QUESTIONS.md:
+//
+//   * CHECK constraints — check_fare_non_negative, check_fare_ledger_balances,
+//     check_rating_1_to_5, check_trip_driver_required_when_assigned
+//   * PARTIAL (WHERE-clause) unique indexes — idx_rider_single_active_trip,
+//     idx_driver_single_active_trip, idx_driver_single_active_vehicle
+//   * Row triggers — trg_review_completed_trip_only (+ fn_review_completed_trip_only),
+//     which rejects a Review whose trip is not completed
+//
+// Because those objects are invisible here, `prisma migrate dev` against this
+// file would emit DDL that DROPS them. Do not run it. `src/db/migrate.ts` is
+// the authoritative schema and the only supported migration executor; run it
+// with `npm run migrate`. `prisma/migrations/` is a recorded history generated
+// FROM migrate.ts, not an independent definition.
+//
+// What IS authoritative for columns, nullability, enums, relations, referential
+// actions and non-partial indexes: src/db/migrate.ts, verified against the live
+// catalog in evidence/ddl-inventory.txt.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DriverStatus {
+  offline
+  available
+  busy
+  suspended
+}
+
+enum VehicleTier {
+  standard
+  comfort
+  xl
+}
+
+enum TripStatus {
+  requested
+  driver_assigned
+  driver_arriving
+  in_progress
+  completed
+  cancelled_by_rider
+  cancelled_by_driver
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+model Rider {
+  id          String    @id @default(uuid()) @db.Uuid
+  fullName    String    @db.VarChar(100)
+  email       String    @unique @db.VarChar(255)
+  phoneNumber String    @unique @db.VarChar(20)
+  rating      Decimal   @default(5.00) @db.Decimal(3, 2)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  trips       Trip[]
+  reviews     Review[]
+
+  @@index([email])
+  @@index([phoneNumber])
+}
+
+model Driver {
+  id            String       @id @default(uuid()) @db.Uuid
+  fullName      String       @db.VarChar(100)
+  email         String       @unique @db.VarChar(255)
+  phoneNumber   String       @unique @db.VarChar(20)
+  licenseNumber String       @unique @db.VarChar(50)
+  status        DriverStatus @default(offline)
+  rating        Decimal      @default(5.00) @db.Decimal(3, 2)
+  totalTrips    Int          @default(0)
+  currentLat    Float?
+  currentLng    Float?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+
+  vehicles      Vehicle[]
+  trips         Trip[]
+  reviews       Review[]
+
+  @@index([status, currentLat, currentLng])
+  @@index([email])
+}
+
+model Vehicle {
+  id           String      @id @default(uuid()) @db.Uuid
+  driverId     String      @db.Uuid
+  driver       Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  make         String      @db.VarChar(50)
+  model        String      @db.VarChar(50)
+  year         Int
+  licensePlate String      @unique @db.VarChar(20)
+  tier         VehicleTier @default(standard)
+  color        String      @db.VarChar(30)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  trips        Trip[]
+
+  // idx_vehicle_driver serves the historical 1-to-N lookup.
+  @@index([driverId, isActive])
+  // OMITTED BY DESIGN: idx_driver_single_active_vehicle, a PARTIAL unique index
+  // ON "Vehicle"("driverId") WHERE "isActive". Prisma has no partial-index
+  // syntax. It is what makes Driver->Vehicle 1-to-1 across ACTIVE vehicles
+  // while still allowing unlimited retired vehicles. See migrate.ts.
+  @@index([licensePlate])
+}
+
+model Trip {
+  id              String     @id @default(uuid()) @db.Uuid
+  riderId         String     @db.Uuid
+  rider           Rider      @relation(fields: [riderId], references: [id], onDelete: Restrict)
+  // NULLABLE UNTIL ACCEPTED. A trip has no driver while status = 'requested',
+  // and stays driver-less when it is cancelled before ever being matched.
+  // migrate.ts enforces this with check_trip_driver_required_when_assigned:
+  // once status is one of driver_assigned / driver_arriving / in_progress /
+  // completed, "driverId" must NOT be null. See migrate.ts for the full
+  // nullability contract, and ENTITIES.md section 1.4.
+  driverId        String?    @db.Uuid
+  driver          Driver?    @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  // Same NULL-until-accepted rule as driverId.
+  vehicleId       String?    @db.Uuid
+  vehicle         Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  status          TripStatus @default(requested)
+  pickupLat       Float
+  pickupLng       Float
+  pickupAddress   String     @db.Text
+  dropoffLat      Float
+  dropoffLng      Float
+  dropoffAddress  String     @db.Text
+  distanceMeters  Int?
+  durationSeconds Int?
+  driverNameSnapshot   String? @db.VarChar(100)
+  driverPhoneSnapshot  String? @db.VarChar(20)
+  vehiclePlateSnapshot String? @db.VarChar(20)
+  vehicleModelSnapshot String? @db.VarChar(100)
+  requestedAt     DateTime   @default(now())
+  acceptedAt      DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancellationReason String? @db.Text
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  receipt         FareReceipt?
+  review          Review?
+
+  @@index([riderId, status])
+  @@index([driverId, status])
+  @@index([status, requestedAt])
+  // Declared here without a sort order; the authoritative DDL in migrate.ts is
+  // ("riderId", "completedAt" DESC) and is named idx_trip_rider_completed.
+  @@index([riderId, completedAt])
+
+  // OMITTED BY DESIGN: the two load-bearing PARTIAL unique indexes
+  //   idx_rider_single_active_trip ON "Trip"("riderId")
+  //     WHERE status IN ('requested','driver_assigned','driver_arriving','in_progress')
+  //   idx_driver_single_active_trip ON "Trip"("driverId")
+  //     WHERE status IN ('driver_assigned','driver_arriving','in_progress')
+  // Prisma has no partial-index syntax, so these appear in migrate.ts only.
+}
+
+model FareReceipt {
+  id                  String        @id @default(uuid()) @db.Uuid
+  tripId              String        @unique @db.Uuid
+  trip                Trip          @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  baseFareMinor       Int
+  distanceFareMinor   Int
+  timeFareMinor       Int
+  surgeMultiplier     Decimal       @default(1.00) @db.Decimal(3, 2)
+  subtotalMinor       Int
+  discountMinor       Int           @default(0)
+  totalFareMinor      Int
+  platformFeeMinor    Int
+  driverEarningsMinor Int
+  currency            String        @default("NGN") @db.VarChar(3)
+  paymentStatus       PaymentStatus @default(pending)
+  paymentMethod       String?        @db.VarChar(50)
+  paymentReference    String?        @db.VarChar(100)
+  createdAt           DateTime       @default(now())
+  // Every entity carries createdAt and updatedAt (HARD_QUESTIONS.md section 4).
+  updatedAt           DateTime       @updatedAt
+
+  // OMITTED BY DESIGN: CHECK constraints check_fare_non_negative and
+  // check_fare_ledger_balances. Prisma has no CHECK-constraint syntax.
+  // Money is INTEGER minor units; see HARD_QUESTIONS.md section 2.
+}
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @unique @db.Uuid
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  riderId   String   @db.Uuid
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Restrict)
+  driverId  String   @db.Uuid
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  rating    Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([driverId, rating])
+  @@index([riderId])
+
+  // OMITTED BY DESIGN: CHECK constraint check_rating_1_to_5, and the trigger
+  // trg_review_completed_trip_only with its function
+  // fn_review_completed_trip_only(), which rejects a review whose trip is not
+  // 'completed'. A CHECK cannot reference another table, so this rule needs a
+  // row trigger; see the "check_review_completed_trip_only" block in migrate.ts
+  // for the full rationale.
+}
+

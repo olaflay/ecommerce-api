@@ -1,0 +1,123 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part A3 centralized errorHandler
+Script:      evidence/harness/partA3_error_handler.ts
+Captured:    2026-09-28T15:44:40.957Z
+Node:        v24.16.0
+Duration:    2.0s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+PART A3 EVIDENCE: centralized errorHandler — real Express responses
+===============================================================================
+Real code under test: task-1-consumable-api/src/middleware/errorHandler.ts :: errorHandler
+Executed at:          2026-09-28T15:44:40.635Z
+Node:                 v24.16.0
+===============================================================================
+
+--- Input 1: NotFoundError, a known AppError ---
+  HTTP status:   404
+  response body: {"error":{"code":"NOT_FOUND","message":"Product with ID 'xyz' not found"}}
+  X-Request-Id:  9d2628cf-b876-48fd-af89-fd9353f50037
+[PASS] Input 1 status
+       expected: 404
+       actual:   404
+[PASS] Input 1 body
+       expected: {"error":{"code":"NOT_FOUND","message":"Product with ID 'xyz' not found"}}
+       actual:   {"error":{"code":"NOT_FOUND","message":"Product with ID 'xyz' not found"}}
+  NOTE  the correlation id travels in the X-Request-Id response header, NOT in the body
+  NOTE  there is no correlationId field in the emitted error envelope
+
+--- Input 2: plain Error("SensitiveDatabaseConnectionCredentialsLeakHere") ---
+  HTTP status:   500
+  response body: {"error":{"code":"INTERNAL_ERROR","message":"Internal server error"}}
+[PASS] Input 2 status
+       expected: 500
+       actual:   500
+[PASS] Input 2 body
+       expected: {"error":{"code":"INTERNAL_ERROR","message":"Internal server error"}}
+       actual:   {"error":{"code":"INTERNAL_ERROR","message":"Internal server error"}}
+[PASS] Input 2 response does NOT leak the secret
+       expected: false
+       actual:   false
+[PASS] Input 2 response does NOT contain 'at '
+       expected: false
+       actual:   false
+[PASS] Input 2 response does NOT contain 'Error:'
+       expected: false
+       actual:   false
+  NOTE  the real errorCode is INTERNAL_ERROR, not INTERNAL_SERVER_ERROR
+
+--- Input 3: ZodError from a missing required field ---
+  HTTP status:   422
+  response body: {"error":{"code":"VALIDATION_ERROR","message":"Request validation failed","details":{"customerId":["Required"]}}}
+[PASS] Input 3 status
+       expected: 422
+       actual:   422
+[PASS] Input 3 error code
+       expected: "VALIDATION_ERROR"
+       actual:   "VALIDATION_ERROR"
+[PASS] Input 3 message
+       expected: "Request validation failed"
+       actual:   "Request validation failed"
+[PASS] Input 3 details shape is flattened fieldErrors
+       expected: {"customerId":["Required"]}
+       actual:   {"customerId":["Required"]}
+
+--- Input 4: real HTTP 422 via validate(createOrderSchema) with no customerId ---
+  HTTP status:   422
+  response body: {"error":{"code":"VALIDATION_ERROR","message":"customerId: Required","details":{"customerId":["Required"]}}}
+[PASS] Input 4 status
+       expected: 422
+       actual:   422
+[PASS] Input 4 error code
+       expected: "VALIDATION_ERROR"
+       actual:   "VALIDATION_ERROR"
+[PASS] Input 4 message is built from the first issue as 'field: message'
+       expected: "customerId: Required"
+       actual:   "customerId: Required"
+  NOTE  the real message is NOT the generic string the old pseudocode claimed
+
+--- Input 5: Prisma.PrismaClientKnownRequestError with code P2002 ---
+  HTTP status:   409
+  response body: {"error":{"code":"CONFLICT","message":"A record with this email already exists"}}
+[PASS] Input 5 status
+       expected: 409
+       actual:   409
+[PASS] Input 5 body
+       expected: {"error":{"code":"CONFLICT","message":"A record with this email already exists"}}
+       actual:   {"error":{"code":"CONFLICT","message":"A record with this email already exists"}}
+
+--- Input 6: malformed JSON body ---
+  HTTP status:   400
+  response body: {"error":{"code":"BAD_REQUEST","message":"Malformed JSON in request body"}}
+[PASS] Input 6 status
+       expected: 400
+       actual:   400
+[PASS] Input 6 body
+       expected: {"error":{"code":"BAD_REQUEST","message":"Malformed JSON in request body"}}
+       actual:   {"error":{"code":"BAD_REQUEST","message":"Malformed JSON in request body"}}
+
+--- Input 7: body larger than the 100kb limit ---
+  HTTP status:   413
+  response body: {"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request payload exceeds size limit of 100kb"}}
+[PASS] Input 7 status
+       expected: 413
+       actual:   413
+[PASS] Input 7 error code
+       expected: "PAYLOAD_TOO_LARGE"
+       actual:   "PAYLOAD_TOO_LARGE"
+
+  NOTE  Branch order in the real source: SyntaxError400 -> 413 -> AppError -> ZodError -> PrismaKnown(P2002/P2025) -> PrismaValidation -> 500 fallback
+
+===============================================================================
+partA3 errorHandler: 20/20 assertions passed.
+===============================================================================
+RESULT: PASS — exiting with code 0
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

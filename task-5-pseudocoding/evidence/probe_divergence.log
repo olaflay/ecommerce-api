@@ -1,0 +1,41 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Hostile-input divergence probe
+Script:      probe_divergence.ts
+Captured:    2026-09-28T15:43:31.412Z
+Node:        v24.16.0
+Duration:    0.6s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+HOSTILE-INPUT DIVERGENCE PROBE: MANUAL (Part B) vs AI (Part C)
+===============================================================================
+
+AGREE             | Infinity distance       | manual: THREW: Invalid distance (must be non-negative number)| ai: THREW: Invalid distance (must be non-negative number)
+                   threat: isNaN(Infinity)===false, so an isNaN-only guard lets this through
+AGREE             | NaN distance            | manual: THREW: Invalid distance (must be non-negative number)| ai: THREW: Invalid distance (must be non-negative number)
+                   threat: NaN is never < 0, so a <0-only guard lets this through
+AGREE             | -Infinity distance      | manual: THREW: Invalid distance (must be non-negative number)| ai: THREW: Invalid distance (must be non-negative number)
+                   threat: negative-infinity must be rejected by the finiteness rule, not the < 0 rule
+AGREE             | Infinity subtotal       | manual: THREW: Invalid subtotal (must be non-negative integer)| ai: THREW: Invalid subtotal (must be non-negative integer)
+                   threat: Number.isInteger(Infinity)===false, so the subtotal guard should catch it
+AGREE             | tiny 0.0001 car peak    | manual: fee=87503                                   | ai: fee=87503
+                   threat: 0.0001*15000 === 1.5, an exact rounding tie that exposes double-rounding
+AGREE             | huge 1e20 car peak      | manual: fee=2.625e+24                               | ai: fee=2.625e+24
+                   threat: distanceFee overflows safe-integer territory; guards must not silently accept
+AGREE             | negative zero           | manual: fee=50000                                   | ai: fee=50000
+                   threat: -0 < 0 is false, so -0 is admitted; must still yield 0, not -0 drift
+
+===============================================================================
+Summary: 7/7 hostile inputs agree across Manual and AI.
+No divergence found. This covers 7 inputs; it is NOT a proof of general
+equivalence. Inputs outside this list are still unverified.
+===============================================================================
+RESULT: NO DIVERGENCE ON THESE 7 HOSTILE INPUTS — exiting with code 0
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

@@ -2,22 +2,32 @@
   "name": "product-engineering-portfolio",
   "version": "1.0.0",
   "private": true,
-  "description": "Product Engineering Portfolio - 5 Core Production Systems (Storefront API, Job Engine, Mobility Data Model, Code Review Audits, Algorithmic Pseudocode Lab)",
+  "description": "Product Engineering Bootcamp portfolio. Five independent systems, each mapping to one graded task.",
   "type": "module",
   "scripts": {
-    "test:storefront": "npm --prefix storefront-api test",
-    "test:jobs": "npm --prefix background-job-engine test",
-    "test:mobility": "npm --prefix urban-mobility-data-modeling test",
-    "test:pseudocode": "npm --prefix algorithmic-pseudocode-lab test",
-    "test": "npm run test:storefront && npm run test:jobs && npm run test:mobility && npm run test:pseudocode",
-    "dev:storefront": "npm --prefix storefront-api run dev",
-    "dev:jobs": "npm --prefix background-job-engine run dev:api",
-    "worker:jobs": "npm --prefix background-job-engine run worker"
+    "test": "npm run test:task1 && npm run test:task2 && npm run test:task3 && npm run test:task5",
+    "test:task1": "npm --prefix task-1-consumable-api test",
+    "test:task2": "npm --prefix task-2-background-jobs test",
+    "test:task3": "npm --prefix task-3-api-data-modeling test",
+    "test:task5": "npm --prefix task-5-pseudocoding test",
+    "test:storefront": "npm run test:task1",
+    "test:jobs": "npm run test:task2",
+    "test:mobility": "npm run test:task3",
+    "test:pseudocode": "npm run test:task5",
+    "verify:ratelimit:live": "node task-1-consumable-api/evidence/verify_rate_limit_live.mjs",
+    "dev:task1": "npm --prefix task-1-consumable-api run dev",
+    "dev:task2": "npm --prefix task-2-background-jobs run dev:api",
+    "dev:storefront": "npm run dev:task1",
+    "dev:jobs": "npm run dev:task2",
+    "worker:task2": "npm --prefix task-2-background-jobs run worker",
+    "worker:jobs": "npm run worker:task2",
+    "db:seed:task1": "npm --prefix task-1-consumable-api run seed",
+    "db:seed:task3": "npm --prefix task-3-api-data-modeling run seed"
   },
-  "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "dotenv": "^16.4.7",
-    "tsx": "^4.19.2",
+  "devDependencies": {
     "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

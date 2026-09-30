@@ -1,0 +1,180 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part A source citation verification
+Script:      evidence/harness/verify_citations.ts
+Captured:    2026-09-28T15:44:57.758Z
+Node:        v24.16.0
+Duration:    0.6s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+CITATION VERIFIER: every Part A source citation re-checked against the real file
+===============================================================================
+Verified at: 2026-09-28T15:44:57.703Z
+Repo root:   C:\Users\ADMIN\Documents\ecommerce api\task-1-consumable-api
+===============================================================================
+
+-------------------------------------------------------------------------------
+CITATION: part-a/01 trace 1 (201 Created + stock decremented)
+  file: tests/orders.test.ts
+  note: the old citation said 'line 14', which is a beforeAll setup line with no assertion
+    47 | expect(res.status).toBe(201);
+    50 | expect(res.body.data.totalAmount).toBe(inStockProduct1.price * 2);
+    52 | expect(res.body.data.items[0].unitPrice).toBe(inStockProduct1.price);
+    58 | expect(updatedProduct!.stockQuantity).toBe(initialStock - 2);
+  [PASS] cited lines contain "201"
+  [PASS] cited lines contain "totalAmount"
+  [PASS] cited lines contain "unitPrice"
+  [PASS] cited lines contain "stockQuantity"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/01 trace 2 (409 Conflict, insufficient stock)
+  file: tests/orders.test.ts
+  note: the old citation said 'line 82', which is a prisma lookup inside a different test
+   136 | expect(res.status).toBe(409);
+   137 | expect(res.body.error.code).toBe("CONFLICT");
+   138 | expect(res.body.error.message).toContain("Insufficient stock");
+  [PASS] cited lines contain "409"
+  [PASS] cited lines contain "CONFLICT"
+  [PASS] cited lines contain "Insufficient stock"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/01 trace 3 (404 Customer not found)
+  file: tests/orders.test.ts
+  note: the old citation said 'line 56', which is a prisma findUnique
+   114 | expect(res.status).toBe(404);
+   115 | expect(res.body.error.code).toBe("NOT_FOUND");
+  [PASS] cited lines contain "404"
+  [PASS] cited lines contain "NOT_FOUND"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/01 structural: the batched FOR UPDATE lock query
+  file: src/services/order.service.ts
+  note: proves the real code takes ONE batched lock, not a per-product loop
+    63 | >`SELECT id, name, price, "stockQuantity" FROM "Product" WHERE id = ANY(${productIds}::uuid[]) FOR UPDATE`;
+  [PASS] cited lines contain "FOR UPDATE"
+  [PASS] cited lines contain "ANY("
+
+-------------------------------------------------------------------------------
+CITATION: part-a/01 structural: currency write
+  file: src/services/order.service.ts
+  note: the old pseudocode omitted this write entirely
+   110 | currency: "NGN",
+  [PASS] cited lines contain "currency: \"NGN\""
+
+-------------------------------------------------------------------------------
+CITATION: part-a/01 structural: customer lookup is OUTSIDE the transaction
+  file: src/services/order.service.ts
+  note: line 38 is the customer lookup, line 58 opens the transaction, so the lookup precedes it
+    38 | const customer = await prisma.customer.findUnique({
+    58 | const createdOrder = await prisma.$transaction(
+  [PASS] cited lines contain "prisma.customer.findUnique"
+  [PASS] cited lines contain "prisma.$transaction"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/02 total computation region
+  file: src/services/order.service.ts
+  note: proves the money region exists at all, contradicting the old 'calculateOrderTotals' fiction
+    75 | let totalAmount = 0;
+    86 | totalAmount += product.price * item.quantity;
+    90 | unitPrice: product.price, // Snapshotted price at order creation
+  [PASS] cited lines contain "let totalAmount = 0"
+  [PASS] cited lines contain "totalAmount +="
+  [PASS] cited lines contain "unitPrice"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/03 500 fallback emits INTERNAL_ERROR, not INTERNAL_SERVER_ERROR
+  file: src/middleware/errorHandler.ts
+  note: the old pseudocode specified INTERNAL_SERVER_ERROR and still scored Match: YES
+   109 | code: "INTERNAL_ERROR",
+   110 | message: "Internal server error",
+  [PASS] cited lines contain "INTERNAL_ERROR"
+  [PASS] cited lines contain "Internal server error"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/03 500 assertion lives here, not at line 49
+  file: tests/app.test.ts
+  note: the old citation said 'line 49', which is `throw new Error(...)` inside the test route
+    55 | expect(res.body).toEqual({
+    57 | code: "INTERNAL_ERROR",
+    58 | message: "Internal server error",
+    59 | },
+  [PASS] cited lines contain "INTERNAL_ERROR"
+  [PASS] cited lines contain "Internal server error"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/03 real 422 with a missing customerId
+  file: tests/orders.test.ts
+  note: the old citation 'line 68' is inside the duplicate-merge test; no test asserted a 422 for a missing customerId
+    91 | expect(res.status).toBe(422);
+    92 | expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  [PASS] cited lines contain "422"
+  [PASS] cited lines contain "VALIDATION_ERROR"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/03 404 route-not-found envelope
+  file: tests/app.test.ts
+  note: supports the AppError branch of the error handler
+    24 | expect(res.body).toEqual({
+    25 | error: {
+    26 | code: "NOT_FOUND",
+    27 | message: "Route not found",
+  [PASS] cited lines contain "NOT_FOUND"
+  [PASS] cited lines contain "Route not found"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/03 validate() builds 'field: message' and uses 422 for body
+  file: src/middleware/validate.ts
+  note: proves .parse() is used (it throws) and that query/params get 400, not 422
+    10 | const parsed = schema.parse(req[location]);
+    17 | ? `${firstIssue.path.length ? firstIssue.path.join(".") + ": " : ""}${firstIssue.message}`
+    21 | next(new ValidationError(message, err.flatten().fieldErrors));
+    23 | next(new BadRequestError(message, err.flatten().fieldErrors));
+  [PASS] cited lines contain "schema.parse"
+  [PASS] cited lines contain "path.join"
+  [PASS] cited lines contain "ValidationError"
+  [PASS] cited lines contain "BadRequestError"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/04 default keyGenerator returns request.ip with no socket fallback
+  file: ../node_modules/express-rate-limit/dist/index.mjs
+  note: the old file quoted a one-liner that does not exist in v7.5.1
+   627 | keyGenerator(request, _response) {
+   628 | validations2.ip(request.ip);
+   631 | return request.ip;
+  [PASS] cited lines contain "keyGenerator(request, _response)"
+  [PASS] cited lines contain "return request.ip;"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/04 sha256 is only used for the store partition key, never the IP
+  file: ../node_modules/express-rate-limit/dist/index.mjs
+  note: refutes the hallucinated IP hashing more precisely than the old citation did
+    19 | var getPartitionKey = (key) => {
+    20 | const hash = createHash("sha256");
+    21 | hash.update(key);
+    22 | const partitionKey = hash.digest("hex").slice(0, 12);
+  [PASS] cited lines contain "getPartitionKey"
+  [PASS] cited lines contain "createHash"
+  [PASS] cited lines contain "sha256"
+  [PASS] cited lines contain "digest"
+
+-------------------------------------------------------------------------------
+CITATION: part-a/06 the repo overrides the transaction defaults at all three call sites
+  file: src/services/order.service.ts
+  note: the real values are 10000/20000, not Prisma's 2000/5000 default
+   137 | { maxWait: 10000, timeout: 20000 });
+   193 | { maxWait: 10000, timeout: 20000 });
+   237 | { maxWait: 10000, timeout: 20000 }
+  [PASS] cited lines contain "maxWait: 10000"
+  [PASS] cited lines contain "timeout: 20000"
+
+===============================================================================
+RESULT: PASS — all 15 citations verified against the real files.
+===============================================================================
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

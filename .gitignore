@@ -1,24 +1,37 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+build/
+storefront-consumer-dist/
+
+# Secrets. Never commit a real .env; commit only .env.example.
 .env
 .env.*.local
-*.log
-.DS_Store
+!.env.example
+
+# Test + tooling output
 coverage/
-consumer/dist/
-consumer/node_modules/
+*.tsbuildinfo
+
+# Agent / browser scratch captures. These are machine-local session artifacts,
+# not deliverables. Note the anchored path: an unanchored rule here would also
+# swallow the committed reviews/ and evidence/ directories.
 .playwright-mcp/
-reviews/
-storefront-api/.env
-storefront-api/dist/
-storefront-api/node_modules/
-storefront-api/consumer/dist/
-storefront-api/consumer/node_modules/
-background-job-engine/.env
-background-job-engine/dist/
-background-job-engine/node_modules/
-urban-mobility-data-modeling/.env
-urban-mobility-data-modeling/dist/
-urban-mobility-data-modeling/node_modules/
-algorithmic-pseudocode-lab/dist/
-algorithmic-pseudocode-lab/node_modules/
+.tmp/
+tmp/
+
+# Editor + OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs. Evidence harnesses write real logs that ARE deliverables, so those are
+# re-included below rather than blanket-ignored.
+*.log
+!task-1-consumable-api/evidence/*.log
+!task-2-background-jobs/evidence/*.log
+!task-3-api-data-modeling/evidence/*.log
+!task-5-pseudocoding/evidence/*.log

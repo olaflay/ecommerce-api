@@ -1,0 +1,191 @@
+===============================================================================
+TASK 5 EVIDENCE LOG
+===============================================================================
+Step:        Part A4/5/6 open-source functions
+Script:      evidence/harness/partA456_open_source.ts
+Captured:    2026-09-28T15:44:56.191Z
+Node:        v24.16.0
+Duration:    15.2s
+Exit code:   0
+===============================================================================
+
+--- BEGIN UNMODIFIED SCRIPT OUTPUT ---
+
+===============================================================================
+PART A4 EVIDENCE: express-rate-limit default keyGenerator (real library, v7.5.1)
+===============================================================================
+Real code under test: node_modules/express-rate-limit/dist/index.mjs
+Executed at:          2026-09-28T15:44:42.487Z
+Node:                 v24.16.0
+===============================================================================
+
+--- Reading the real default keyGenerator out of the installed package ---
+  source: node_modules/express-rate-limit/dist/index.mjs:627
+    627:     keyGenerator(request, _response) {
+    628:       validations2.ip(request.ip);
+    629:       validations2.trustProxy(request);
+    630:       validations2.xForwardedForHeader(request);
+    631:       return request.ip;
+    632:     },
+[PASS] default keyGenerator source is 5 lines at the printed location
+       expected: 627
+       actual:   627
+[PASS] it returns request.ip verbatim
+       expected: true
+       actual:   true
+[PASS] it contains NO socket.remoteAddress fallback
+       expected: false
+       actual:   false
+[PASS] createHash('sha256') appears in the file but NOT in the key generator
+       expected: false
+       actual:   false
+  NOTE  createHash('sha256') is at line 20, inside getPartitionKey:
+        const hash = createHash("sha256");
+        hash.update(key);
+  NOTE  that hashes the partition key for the rate-limit store, NOT the client IP
+
+--- The ip validator exists but is DISABLED by default, so it never fires ---
+  node_modules/express-rate-limit/dist/index.mjs:97
+    enabled: {
+    default: true
+[PASS] only the 'default' validation is enabled out of the box
+       expected: "default: true"
+       actual:   "default: true"
+  the ip validator is defined at line 114 and throws when request.ip is undefined
+[PASS] ip validator exists
+       expected: true
+       actual:   true
+[PASS] ip validator throws ERR_ERL_UNDEFINED_IP_ADDRESS when undefined
+       expected: true
+       actual:   true
+  NOTE  the default keyGenerator body has NO socket.remoteAddress fallback, so with
+        request.ip undefined the key is literally the value undefined, not a fallback address
+  HTTP status with request.ip forced undefined: 200
+  key the default body produced:               "undefined"
+[PASS] request still served
+       expected: 200
+       actual:   200
+[PASS] key is the string 'undefined', proving no socket fallback
+       expected: "undefined"
+       actual:   "undefined"
+
+--- Behavioural proof: a normal request keys on the plain IP string ---
+[PASS] key observed for a normal request
+       expected: ["::ffff:127.0.0.1"]
+       actual:   ["::ffff:127.0.0.1"]
+[PASS] key is a bare IP string, not a hash
+       expected: true
+       actual:   true
+  observed key: "::ffff:127.0.0.1"
+  NOTE  a 64-character hex key would have indicated SHA-256 hashing. There is none.
+
+===============================================================================
+PART A5 EVIDENCE: Zod validation middleware (real repo middleware over real Zod 3)
+===============================================================================
+Real code under test: task-1-consumable-api/src/middleware/validate.ts :: validate
+Executed at:          2026-09-28T15:44:42.595Z
+Node:                 v24.16.0
+===============================================================================
+
+--- The middleware calls .parse(), which THROWS. .safeParse() does not. ---
+[PASS] Zod .parse() throws on invalid input
+       expected: true
+       actual:   true
+[PASS] Zod .safeParse() does not throw
+       expected: false
+       actual:   false
+[PASS] safeParse returns a discriminated union with .error
+       expected: true
+       actual:   true
+  NOTE  the repo middleware therefore NEEDS try/catch, unlike the old pseudocode
+
+--- Real HTTP behaviour of validate(schema) on a body ---
+  invalid body -> 422 {"error":{"code":"VALIDATION_ERROR","message":"quantity: Number must be greater than or equal to 1","details":{"quantity":["Number must be greater than or equal to 1"]}}}
+[PASS] invalid body status
+       expected: 422
+       actual:   422
+[PASS] invalid body code
+       expected: "VALIDATION_ERROR"
+       actual:   "VALIDATION_ERROR"
+[PASS] invalid body message format
+       expected: "quantity: Number must be greater than or equal to 1"
+       actual:   "quantity: Number must be greater than or equal to 1"
+[PASS] invalid body details
+       expected: {"quantity":["Number must be greater than or equal to 1"]}
+       actual:   {"quantity":["Number must be greater than or equal to 1"]}
+  valid body   -> 200 {"received":{"quantity":5}}
+[PASS] valid body status
+       expected: 200
+       actual:   200
+[PASS] req.body is replaced by the parsed output
+       expected: {"quantity":5}
+       actual:   {"quantity":5}
+
+--- Query and params locations use 400 BAD_REQUEST, not 422 ---
+  bad query -> 400 {"error":{"code":"BAD_REQUEST","message":"page: Number must be greater than or equal to 1","details":{"page":["Number must be greater than or equal to 1"]}}}
+[PASS] query validation status
+       expected: 400
+       actual:   400
+[PASS] query validation code
+       expected: "BAD_REQUEST"
+       actual:   "BAD_REQUEST"
+  NOTE  the old pseudocode claimed 422 VALIDATION_ERROR for every location
+
+===============================================================================
+PART A6 EVIDENCE: Prisma 6.19.3 interactive transaction (real engine, real database)
+===============================================================================
+Real code under test: @prisma/client :: $transaction(async (tx) => ...)
+Executed at:          2026-09-28T15:44:42.670Z
+Node:                 v24.16.0
+===============================================================================
+
+--- Interactive transactions do NOT auto-retry: one failure, one attempt ---
+  callback invocations: 1
+  error surfaced:       deliberate callback failure
+[PASS] callback was invoked exactly once (no auto-retry)
+       expected: 1
+       actual:   1
+[PASS] the callback error reached the caller unchanged
+       expected: "deliberate callback failure"
+       actual:   "deliberate callback failure"
+  NOTE  an auto-retrying runtime would have invoked the callback 3+ times
+
+--- The default total timeout is the Prisma default of 5000ms, and it is enforced ---
+  elapsed before the error surfaced: 6839ms (callback asked for 6500ms)
+  error code:                      P2028
+  error message:                   Transaction API error: Transaction already closed: A commit cannot be executed on an expired transaction. The timeout for this transaction was 5000 ms, however 6508 ms passed since the start of the transaction. Consider increasing the interactive transaction timeout or doing less work in the transaction.
+[PASS] Prisma reported error P2028
+       expected: "P2028"
+       actual:   "P2028"
+[PASS] the engine names a 5000 ms timeout, which is Prisma's default, not the repo's 20000
+       expected: true
+       actual:   true
+[PASS] the error surfaced only after the callback's own 6500ms timer finished
+       expected: true
+       actual:   true
+  NOTE  the transaction was already dead at 5000ms; the wall clock kept running because the
+        callback awaited an uncancellable timer. The P2028 message is the load-bearing evidence.
+
+--- maxWait is honoured: an impossible maxWait fails fast rather than hanging ---
+  elapsed: 1036ms with maxWait=1
+  result:  (transaction succeeded; pool had a free connection)
+  NOTE  Interpretation: maxWait=1 did not force a failure here, which means the pool had a free connection. The 5000ms default timeout result above is the load-bearing evidence for the default.
+
+--- The repository overrides the defaults: maxWait 10000, timeout 20000 ---
+  occurrences in order.service.ts: [{"maxWait":"10000","timeout":"20000"},{"maxWait":"10000","timeout":"20000"},{"maxWait":"10000","timeout":"20000"}]
+[PASS] three call sites override the transaction defaults
+       expected: 3
+       actual:   3
+[PASS] all three use maxWait 10000 / timeout 20000
+       expected: true
+       actual:   true
+  NOTE  the pseudocode's claim of defaults 2000/5000 is Prisma's documented default,
+        which this codebase never uses. Both facts are recorded rather than reconciled.
+
+===============================================================================
+partA4/5/6 open-source functions: 29/29 assertions passed.
+===============================================================================
+RESULT: PASS — exiting with code 0
+
+
+--- END UNMODIFIED SCRIPT OUTPUT ---

@@ -1,0 +1,16 @@
+﻿COMMAND : npx tsx evidence/probe-clock-skew.ts
+RUN AT  : 2026-09-28T14:14:10.1049934Z
+PURPOSE : measure the offset between this host's clock and the database clock.
+          runAt, lastHeartbeatAt and the sweeper's staleness cutoff are all stamped
+          by Postgres clock_timestamp() so that one clock governs all queue time.
+
+RESULT  : this host is roughly in sync with the database (see median below), so the
+          single-clock design is defensive rather than a fix for a skew seen here.
+
+[clock] local  now = 2026-09-28T14:14:09.999Z
+[clock] db     now = 2026-09-28T14:14:10.279Z
+[clock] samples (db - local, ms): [1576, 423, 432, 416, 427]
+[clock] median offset (db - local) = 427ms
+[clock] verdict: within 1000ms tolerance
+
+EXIT CODE: 0
